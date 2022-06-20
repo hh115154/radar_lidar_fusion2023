@@ -26,7 +26,8 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         #left
-        verticalLayout = QtWidgets.QVBoxLayout()
+        self.splitter_vedio_pcl = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        # verticalLayout = QtWidgets.QVBoxLayout()
 
         #left.top
         self.swt_camera_stacklayout = QtWidgets.QStackedLayout()
@@ -42,30 +43,44 @@ class Ui_MainWindow(object):
 
         self.lable_camera = QtWidgets.QLabel()
         self.lable_camera.setObjectName("lable_camera")
-        self.swt_camera_stacklayout.addWidget(self.lable_camera)
+        self.lable_camera.setScaledContents(True)
+        self.splitter_vedio_pcl.addWidget(self.lable_camera)
 
-        verticalLayout.addLayout(self.swt_camera_stacklayout)
-
+        # splitter_vedio_pcl.addWidget(self.swt_camera_stacklayout)
 
         # 左下角小控件
         self.GLView_OrgRadar = myControls.MyGLViewWidget()
-        verticalLayout.addWidget(self.GLView_OrgRadar)
-        verticalLayout.setStretch(0,1)
-        verticalLayout.setStretch(1,1)
+        self.splitter_vedio_pcl.addWidget(self.GLView_OrgRadar)
+        # verticalLayout.setStretch(0,1)
+        # verticalLayout.setStretch(1,1)
 
 
         # 右侧大控件
+        self.splitter_glview_table = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
         # self.GLView_FuseRadar = myControls.MyGLViewWidget(rotationMethod="quaternion")
         self.GLView_FuseRadar = myControls.MyGLViewWidget()
 
-        horizontalLayout = QtWidgets.QHBoxLayout()
-        horizontalLayout.addLayout(verticalLayout)
-        horizontalLayout.addWidget(self.GLView_FuseRadar)
-        horizontalLayout.setStretch(0,1)
-        horizontalLayout.setStretch(1,2)
+        self.splitter_glview_table.addWidget(self.GLView_FuseRadar)
+
+        self.tableView = QtWidgets.QTableView()
+        # 水平方向标签拓展剩下的窗口部分，填满表格
+        self.tableView.horizontalHeader().setStretchLastSection(True)
+        # 水平方向，表格大小拓展到适当的尺寸
+        self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.tableView.verticalHeader().setDefaultSectionSize(5)
+        self.splitter_glview_table.addWidget(self.tableView)
+
+        self.splitter_org_obj = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+
+        # horizontalLayout = QtWidgets.QHBoxLayout()
+        self.splitter_org_obj.addWidget(self.splitter_vedio_pcl)
+
+        self.splitter_org_obj.addWidget(self.splitter_glview_table)
+        # horizontalLayout.setStretch(0,1)
+        # horizontalLayout.setStretch(1,2)
 
         self.base_verticalLayout = QtWidgets.QVBoxLayout()
-        self.base_verticalLayout.addLayout(horizontalLayout)
+        self.base_verticalLayout.addWidget(self.splitter_org_obj)
 
         play_area_verticalLayout = QtWidgets.QVBoxLayout()
         self.timeSlider = QtWidgets.QSlider()

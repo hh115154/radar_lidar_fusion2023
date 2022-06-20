@@ -27,6 +27,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         super(MyController, self).__init__()
         self.setupUi(self)
 
+        self.model = QtGui.QStandardItemModel(1, 6);
+        self.model.setHorizontalHeaderLabels(['ID', 'Type', 'Dist', 'Height', 'stMove', 'speed'])
+        self.tableView.setModel(self.model)
+
         self.player = QMediaPlayer(self)  # 创建视频播放器
 
         self.radar_timer_step = 30
@@ -128,6 +132,27 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             # else:
             #     color = QtGui.QColor(255, 0, 0)
             self.GLView_FuseRadar.add3Dbox(pos=objPre[i].posn, size=size, color=objPre[i].color, _id=objPre[i].id)
+
+            col = 0
+            self.tableItem(i, col, objPre[i].id)
+            col += 1  # 1
+            self.tableItem(i, col, objPre[i].type.name)
+            col += 1  # 2
+            x, y, z = objPre[i].posn
+            self.tableItem(i, col, x)
+            col += 1  # 3
+            self.tableItem(i, col, z)
+            col += 1  # 4
+            self.tableItem(i, col, objPre[i].stMovement)
+            col += 1  # 5
+            self.tableItem(i, col, objPre[i].absV_x)
+
+    def tableItem(self, row, col, val):
+        item = QtGui.QStandardItem()
+        self.model.setItem(row, col, item)
+        index = self.model.index(row, col)
+        value = QtCore.QVariant(val)
+        self.model.setData(index, value)
 
     def get_next_line(self):
         if not self.isOnlineMode and self.isRunning and self.readRadarLogFileThread._isPause:

@@ -15,8 +15,8 @@ if __name__ == '__main__':
     mySocket.bind(pcAddr)
 
     #加入组播组
-    # mreq = struct.pack("=4sl", inet_aton(group_ip), INADDR_ANY)
-    # mySocket.setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP, mreq)
+    mreq = struct.pack("=4sl", inet_aton(group_ip), INADDR_ANY)
+    mySocket.setsockopt(IPPROTO_IP, IP_ADD_MEMBERSHIP, mreq)
 
     while True:
         try:
@@ -24,7 +24,7 @@ if __name__ == '__main__':
             # print("recv_message len of: ",len(recv_message),"data is :", recv_message)
             cmd_res_size = mySocket.recv(2048)
             print("cmd_res_size len of: ",len(cmd_res_size))
-            # print(cmd_res_size)
+            print(cmd_res_size)
         except Exception as e:
             print(e)
 
