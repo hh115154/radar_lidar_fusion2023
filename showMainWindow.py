@@ -27,8 +27,29 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         super(MyController, self).__init__()
         self.setupUi(self)
 
-        self.model = QtGui.QStandardItemModel(1, 6);
-        self.model.setHorizontalHeaderLabels(['ID', 'Type', 'Dist', 'Height', 'stMove', 'speed'])
+        self.model = QtGui.QStandardItemModel(22,1)
+        self.model.setVerticalHeaderLabels(['u_ID',
+                                            'u_StatusMeasurement',
+                                            'u_StatusMovement',
+                                            'u_Position_Reference',
+                                            'u_Position_X',
+                                            'u_Position_Y',
+                                            'u_Position_Z',
+                                            'u_Position_Orientation',
+                                            'u_Existence_Probability',
+                                            'f_Dynamics_AbsVel_X',
+                                            'f_Dynamics_AbsVel_Y',
+                                            'f_Dynamics_RelVel_X',
+                                            'f_Dynamics_RelVel_Y',
+                                            'f_Dynamics_AbsAccel_X',
+                                            'f_Dynamics_AbsAccel_Y',
+                                            'f_Dynamics_RelAccel_X',
+                                            'f_Dynamics_RelAccel_Y',
+                                            'u_Dynamics_Orientation_Rate_Mean',
+                                            'u_Shape_Length_Status',
+                                            'u_Shape_Length_Edge_Mean',
+                                            'u_Shape_Width_Status',
+                                            'u_Shape_Width_Edge_Mean'])
         self.tableView.setModel(self.model)
 
         self.player = QMediaPlayer(self)  # 创建视频播放器
@@ -79,6 +100,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.orgRadarThread = threadMngt.OriginalRadarThread()
         self.orgRadarThread.orgRadar_pcl_signal.connect(self.show_radar)  # 仿真文件数据
         self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
+        self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)
         self.orgRadarThread.start()
 
         self.timer_online_updatecamera = QtCore.QTimer()
@@ -123,6 +145,54 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.GLView_OrgRadar.addPoints(pos=dict[key], size=1, color=map_hight_color[key])
         self.GLView_OrgRadar.addPointsDict()
 
+    def show_objectsInfo(self, objList):
+        for i in range(objList):
+            row = 0
+            self.tableView(row, i, objList[i].u_ID)
+            row+=1
+            self.tableView(row,i,objList[i].u_StatusMeasurement)
+            row+=1
+            self.tableView(row,i,objList[i].u_StatusMovement)
+            row += 1
+            self.tableView(row, i, objList[i].u_Position_Reference)
+            row+=1
+            self.tableView(row,i,objList[i].u_Position_X)
+            row+=1
+            self.tableView(row,i,objList[i].u_Position_Y)
+            row += 1
+            self.tableView(row, i, objList[i].u_Position_Z)
+            row+=1
+            self.tableView(row,i,objList[i].u_Position_Orientation)
+            row+=1
+            self.tableView(row,i,objList[i].u_Existence_Probability)
+            row += 1
+            self.tableView(row, i, objList[i].f_Dynamics_AbsVel_X)
+            row += 1
+            self.tableView(row, i, objList[i].f_Dynamics_AbsVel_Y)
+            row+=1
+            self.tableView(row,i,objList[i].f_Dynamics_RelVel_X)
+            row+=1
+            self.tableView(row,i,objList[i].f_Dynamics_RelVel_Y)
+            row += 1
+            self.tableView(row, i, objList[i].f_Dynamics_AbsAccel_X)
+            row += 1
+            self.tableView(row, i, objList[i].f_Dynamics_AbsAccel_Y)
+            row += 1
+            self.tableView(row, i, objList[i].f_Dynamics_RelAccel_X)
+            row += 1
+            self.tableView(row, i, objList[i].f_Dynamics_RelAccel_Y)
+            row += 1
+            self.tableView(row, i, objList[i].u_Dynamics_Orientation_Rate_Mean)
+            row += 1
+            self.tableView(row, i, objList[i].u_Shape_Length_Status)
+            row += 1
+            self.tableView(row, i, objList[i].u_Shape_Length_Edge_Mean)
+            row += 1
+            self.tableView(row, i, objList[i].u_Shape_Width_Status)
+            row += 1
+            self.tableView(row, i, objList[i].u_Shape_Width_Edge_Mean)
+
+
     def show_objects(self, objPre):
         self.GLView_FuseRadar.clear3Dbox()
         for i in range(len(objPre)):
@@ -133,19 +203,21 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             #     color = QtGui.QColor(255, 0, 0)
             self.GLView_FuseRadar.add3Dbox(pos=objPre[i].posn, size=size, color=objPre[i].color, _id=objPre[i].id)
 
-            col = 0
-            self.tableItem(i, col, objPre[i].id)
-            col += 1  # 1
-            self.tableItem(i, col, objPre[i].type.name)
-            col += 1  # 2
-            x, y, z = objPre[i].posn
-            self.tableItem(i, col, x)
-            col += 1  # 3
-            self.tableItem(i, col, z)
-            col += 1  # 4
-            self.tableItem(i, col, objPre[i].stMovement)
-            col += 1  # 5
-            self.tableItem(i, col, objPre[i].absV_x)
+            # col = 0
+            # self.tableItem(i, col, objPre[i].id)
+            # col += 1  # 1
+            # self.tableItem(i, col, objPre[i].type.name)
+            # col += 1  # 2
+            # x, y, z = objPre[i].posn
+            # self.tableItem(i, col, x)
+            # col += 1  # 3
+            # self.tableItem(i, col, z)
+            # col += 1  # 4
+            # self.tableItem(i, col, objPre[i].stMovement)
+            # col += 1  # 5
+            # self.tableItem(i, col, objPre[i].absV_x)
+
+
 
     def tableItem(self, row, col, val):
         item = QtGui.QStandardItem()
@@ -288,6 +360,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(baseName)
         self.readRadarLogFileThread.log_pcl_signal.connect(self.show_radar)  # 仿真文件数据
         self.readRadarLogFileThread.log_obj_signal.connect(self.show_objects)  # 仿真文件数据
+
         self.readRadarLogFileThread.update_progress_signal.connect(self.update_radar_progress)  # 仿真文件数据
         self.readRadarLogFileThread.start()
         self.player.pause()

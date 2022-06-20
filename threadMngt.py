@@ -169,6 +169,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 	pcl_posn_signal = pyqtSignal(list)
 	orgRadar_pcl_signal = pyqtSignal(dict)
 	orgRadar_obj_signal = pyqtSignal(list)
+	orgRadar_objInfo_signal = pyqtSignal(list)
 	def __init__(self):
 		super(OriginalRadarThread, self).__init__()
 		self.adapter_socket = MyUdpSocket()
@@ -180,6 +181,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 	def draw_obj(self,data_bytes):
 		obj_buf = data_bytes[16:9385 + 16]
 		obj_list = protocol.ARS548_ObjectList(obj_buf)
+		self.orgRadar_objInfo_signal(obj_list)
 		objPresentations = []
 		for j in range(obj_list.ObjectList_NumOfObjects):
 			# if obj_list.ObjectList_Objects[j].u_StatusMovement == 1:

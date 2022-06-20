@@ -67,7 +67,7 @@ class Ui_MainWindow(object):
         self.tableView.horizontalHeader().setStretchLastSection(True)
         # 水平方向，表格大小拓展到适当的尺寸
         self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-        self.tableView.verticalHeader().setDefaultSectionSize(5)
+        self.tableView.verticalHeader().setDefaultSectionSize(38)
         self.splitter_glview_table.addWidget(self.tableView)
 
         self.splitter_org_obj = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
