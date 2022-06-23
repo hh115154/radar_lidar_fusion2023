@@ -44,6 +44,9 @@ class Ui_MainWindow(object):
         self.lable_camera = QtWidgets.QLabel()
         self.lable_camera.setObjectName("lable_camera")
         self.lable_camera.setScaledContents(True)
+
+        # self.lable_camera.setDisabled(True)
+        # self.videoWidget.setDisabled(True)
         self.splitter_vedio_pcl.addWidget(self.lable_camera)
 
         # splitter_vedio_pcl.addWidget(self.swt_camera_stacklayout)
@@ -66,7 +69,21 @@ class Ui_MainWindow(object):
         # 水平方向标签拓展剩下的窗口部分，填满表格
         self.tableView.horizontalHeader().setStretchLastSection(True)
         # 水平方向，表格大小拓展到适当的尺寸
-        self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.tableView.horizontalHeader().setSectionResizeMode( QtWidgets.QHeaderView.Interactive)
+
+        # # 用户可调整，默认值为setDefaultSectionSized的值
+        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        # # 用户不可调整，默认值为setDefaultSectionSized的值
+        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
+        # # 用户不可调整,自动平分适应可用区域
+        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # # 用户不可调整,自动适应内容的宽度
+        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        # # 用户可调整,默认值为setDefaultSectionSized的值
+        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.Custom)
+
+
         self.tableView.verticalHeader().setDefaultSectionSize(38)
         self.splitter_glview_table.addWidget(self.tableView)
 

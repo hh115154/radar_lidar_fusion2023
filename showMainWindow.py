@@ -27,28 +27,21 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         super(MyController, self).__init__()
         self.setupUi(self)
 
-        self.model = QtGui.QStandardItemModel(22,1)
+        self.model = QtGui.QStandardItemModel(15, 15)
         self.model.setVerticalHeaderLabels(['u_ID',
-                                            'u_StatusMeasurement',
-                                            'u_StatusMovement',
-                                            'u_Position_Reference',
                                             'u_Position_X',
                                             'u_Position_Y',
                                             'u_Position_Z',
-                                            'u_Position_Orientation',
                                             'u_Existence_Probability',
-                                            'f_Dynamics_AbsVel_X',
-                                            'f_Dynamics_AbsVel_Y',
-                                            'f_Dynamics_RelVel_X',
-                                            'f_Dynamics_RelVel_Y',
-                                            'f_Dynamics_AbsAccel_X',
-                                            'f_Dynamics_AbsAccel_Y',
-                                            'f_Dynamics_RelAccel_X',
-                                            'f_Dynamics_RelAccel_Y',
-                                            'u_Dynamics_Orientation_Rate_Mean',
-                                            'u_Shape_Length_Status',
+                                            'u_Classification_Car',
+                                            'u_Classification_Truck',
+                                            'u_Classification_Motorcycle',
+                                            'u_Classification_Bicycle',
+                                            'u_Classification_Pedestrian',
+                                            'u_Classification_Animal',
+                                            'u_Classification_Hazard',
+                                            'u_Classification_Unknown',
                                             'u_Shape_Length_Edge_Mean',
-                                            'u_Shape_Width_Status',
                                             'u_Shape_Width_Edge_Mean'])
         self.tableView.setModel(self.model)
 
@@ -94,13 +87,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.timer_radar.timeout.connect(self.get_next_line)
         self.timer_radar.start(self.radar_timer_step)
 
-        self.cameraThread = threadMngt.VideoRecordThread()
-        self.cameraThread.start()
-        self.cameraThread.pause()
+        # self.cameraThread = threadMngt.VideoRecordThread()
+        # self.cameraThread.start()
+        # self.cameraThread.pause()
         self.orgRadarThread = threadMngt.OriginalRadarThread()
         self.orgRadarThread.orgRadar_pcl_signal.connect(self.show_radar)  # 仿真文件数据
         self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
-        self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)
+        self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo) # 表格控件
         self.orgRadarThread.start()
 
         self.timer_online_updatecamera = QtCore.QTimer()
@@ -123,8 +116,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
 
     def update_online_camera(self):
-        show_image = self.cameraThread.showImage
-        self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image))
+        pass
+        # show_image = self.cameraThread.showImage
+        # self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image))
 
     def do_timeSliderMoved(self):
         # self.timeSlider.setSliderPosition()
@@ -146,51 +140,39 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.GLView_OrgRadar.addPointsDict()
 
     def show_objectsInfo(self, objList):
-        for i in range(objList):
+        print(len(objList))
+        for i in range(len(objList)):
+
             row = 0
-            self.tableView(row, i, objList[i].u_ID)
+            self.tableItem(row, i, objList[i].u_ID)
             row+=1
-            self.tableView(row,i,objList[i].u_StatusMeasurement)
+            self.tableItem(row,i,objList[i].u_Position_X)
             row+=1
-            self.tableView(row,i,objList[i].u_StatusMovement)
+            self.tableItem(row,i,objList[i].u_Position_Y)
             row += 1
-            self.tableView(row, i, objList[i].u_Position_Reference)
+            self.tableItem(row, i, objList[i].u_Position_Z)
             row+=1
-            self.tableView(row,i,objList[i].u_Position_X)
+            self.tableItem(row,i,objList[i].u_Existence_Probability)
             row+=1
-            self.tableView(row,i,objList[i].u_Position_Y)
-            row += 1
-            self.tableView(row, i, objList[i].u_Position_Z)
+            self.tableItem(row, i, objList[i].u_Classification_Car)
             row+=1
-            self.tableView(row,i,objList[i].u_Position_Orientation)
+            self.tableItem(row, i, objList[i].u_Classification_Truck)
             row+=1
-            self.tableView(row,i,objList[i].u_Existence_Probability)
-            row += 1
-            self.tableView(row, i, objList[i].f_Dynamics_AbsVel_X)
-            row += 1
-            self.tableView(row, i, objList[i].f_Dynamics_AbsVel_Y)
+            self.tableItem(row, i, objList[i].u_Classification_Motorcycle)
             row+=1
-            self.tableView(row,i,objList[i].f_Dynamics_RelVel_X)
+            self.tableItem(row, i, objList[i].u_Classification_Bicycle)
             row+=1
-            self.tableView(row,i,objList[i].f_Dynamics_RelVel_Y)
+            self.tableItem(row, i, objList[i].u_Classification_Pedestrian)
+            row+=1
+            self.tableItem(row, i, objList[i].u_Classification_Animal)
+            row+=1
+            self.tableItem(row, i, objList[i].u_Classification_Hazard)
+            row+=1
+            self.tableItem(row, i, objList[i].u_Classification_Unknown)
+            row+=1
+            self.tableItem(row, i, objList[i].u_Shape_Length_Edge_Mean)
             row += 1
-            self.tableView(row, i, objList[i].f_Dynamics_AbsAccel_X)
-            row += 1
-            self.tableView(row, i, objList[i].f_Dynamics_AbsAccel_Y)
-            row += 1
-            self.tableView(row, i, objList[i].f_Dynamics_RelAccel_X)
-            row += 1
-            self.tableView(row, i, objList[i].f_Dynamics_RelAccel_Y)
-            row += 1
-            self.tableView(row, i, objList[i].u_Dynamics_Orientation_Rate_Mean)
-            row += 1
-            self.tableView(row, i, objList[i].u_Shape_Length_Status)
-            row += 1
-            self.tableView(row, i, objList[i].u_Shape_Length_Edge_Mean)
-            row += 1
-            self.tableView(row, i, objList[i].u_Shape_Width_Status)
-            row += 1
-            self.tableView(row, i, objList[i].u_Shape_Width_Edge_Mean)
+            self.tableItem(row, i, objList[i].u_Shape_Width_Edge_Mean)
 
 
     def show_objects(self, objPre):
@@ -339,7 +321,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         ##      curPath=os.getcwd()  #获取系统当前目录
         curPath = QDir.currentPath()  # 获取系统当前目录
         title = "选择视频文件"
-        filt = "视频文件(*.wmv *.avi *.mp4);;所有文件(*.*)"
+        # filt = "视频文件(*.wmv *.avi *.mp4);;所有文件(*.*)"
+        filt = "log file(*.hex);;所有文件(*.*)"
         fileName, flt = QFileDialog.getOpenFileName(self, title, curPath, filt)
         if (fileName == ""):
             return
@@ -360,6 +343,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(baseName)
         self.readRadarLogFileThread.log_pcl_signal.connect(self.show_radar)  # 仿真文件数据
         self.readRadarLogFileThread.log_obj_signal.connect(self.show_objects)  # 仿真文件数据
+        self.readRadarLogFileThread.log_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
 
         self.readRadarLogFileThread.update_progress_signal.connect(self.update_radar_progress)  # 仿真文件数据
         self.readRadarLogFileThread.start()
@@ -378,17 +362,17 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             if self.isRunning:  # 如果正在运行，则暂停，并保存文件
                 # self.camera.stop()
                 self.timer_online_updatecamera.stop()
-                self.cameraThread.pause()
-                self.cameraThread.saveVideo()
+                # self.cameraThread.pause()
+                # self.cameraThread.saveVideo()
 
                 self.orgRadarThread.pause()
                 # self.cameraThread.quit()
                 self.btnPlay.setIcon(self.iconPlay)
             else:  # 如果没有运行，则开始记录
                 # self.camera.start()
-                if self.cameraThread.videoWriter is None:
-                    self.cameraThread.updateVideoWriter()
-                self.cameraThread.resume()
+                # if self.cameraThread.videoWriter is None:
+                #     self.cameraThread.updateVideoWriter()
+                # self.cameraThread.resume()
                 self.timer_online_updatecamera.start(50)
                 self.orgRadarThread.resume()
                 self.btnPlay.setIcon(self.iconPause)

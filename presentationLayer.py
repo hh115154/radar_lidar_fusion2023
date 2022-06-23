@@ -4,7 +4,7 @@ from PyQt5 import QtGui
 from ctypes import *
 import ctypes
 
-class my_pcl():
+class Pcl_Color():
     def __init__(self):
         self.dict_hight2color = {1: [], 2: [], 3: [], 4: [], 5: []}
 
@@ -85,7 +85,8 @@ class BaseObject:
         self.length = length
         self.width = width
 
-        self.posn = (-y, x + width, z)
+        # self.posn = (-y, x + width, z)
+        self.posn = (-y, x , z)
 
 class MyCuboid(BaseObject):
     def __init__(self, length, width, x, y, z, _type, _id, _absV_x, _absV_y, _stMovement=0, _probability=0):

@@ -57,11 +57,11 @@ class MyGLViewWidget(gl.GLViewWidget):
         vehicle_width = 2
         vehicle_height = 2
 
-        self.grid_length = 300
-        self.grid_width = 200
-        self.gridStep = 20
+        self.grid_length = 50#300
+        self.grid_width = 30#200
+        self.gridStep = 5
 
-        self.y_offset = -self.grid_length / 2 + vehicle_length
+        self.y_offset = -self.grid_length / 2
 
         # self.grd = MyGLGridItem(size=QtGui.QVector3D(self.grid_width, self.grid_length, 0), _step=self.gridStep,
 		# 						y_offset=self.y_offset)
@@ -80,7 +80,12 @@ class MyGLViewWidget(gl.GLViewWidget):
         # self.ax = MyGLAxisItem(size=QtGui.QVector3D(0.5, 0.5, 0.5))
         # self.addItem(self.ax)
 
-        self.setCameraPosition(distance=280, elevation=np.degrees(0.4), azimuth=np.degrees(-3.14 / 2))
+
+        camera_distance = 28 #280
+        camera_elevation= np.degrees(0.4)
+
+
+        self.setCameraPosition(distance=camera_distance, elevation=camera_elevation , azimuth=np.degrees(-3.14 / 2))
 
         self.myCar = gl.GLBoxItem(size=QtGui.QVector3D(vehicle_width, vehicle_length, vehicle_height),
                                   color=QtGui.QColor(255, 255, 0))
@@ -148,10 +153,14 @@ class MyGLViewWidget(gl.GLViewWidget):
         self.addItem(self.rilane)
 
     def add3Dbox(self, pos, size, color, _id):
+        x,y,z = pos
         box = gl.GLBoxItem(size=size, color=color)
         pos = list(np.sum([pos, (0, self.y_offset, 0)], axis=0))
 
-        textItem = gl.GLTextItem(text=str(_id), color=color)
+        z =round(z,2)
+        dist =round(y,2)
+        objText = str(_id) + ':' + str(z) + ':' + str(dist)
+        textItem = gl.GLTextItem(text=objText, color=color)
         textItem.setData(font=QtGui.QFont('Helvetica', 8))
         textItem.translate(*pos)
         self.addItem(textItem)
@@ -198,7 +207,7 @@ class MyGLViewWidget(gl.GLViewWidget):
     def addDistText(self):
         for i in range(0, self.grid_length + self.gridStep, self.gridStep):
             textItem = gl.GLTextItem(text=str(i), color=QtGui.QColor(255, 255, 255))
-            textItem.setData(font=QtGui.QFont('Helvetica', 8))
+            textItem.setData(font=QtGui.QFont('Helvetica', 10))
             textItem.translate(-self.grid_width / 2, i -self.grid_length/2, 0)
             self.addItem(textItem)
 

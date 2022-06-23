@@ -2,7 +2,7 @@ from socket import *
 import struct
 
 port = 42102
-pcIp = '10.13.1.199'
+pcIp = ''
 pcAddr = (pcIp, port)
 
 group_ip = '224.0.2.2'
@@ -20,11 +20,11 @@ if __name__ == '__main__':
 
     while True:
         try:
-            # recv_message, client = mySocket.recvfrom(2048)
-            # print("recv_message len of: ",len(recv_message),"data is :", recv_message)
-            cmd_res_size = mySocket.recv(2048)
-            print("cmd_res_size len of: ",len(cmd_res_size))
-            print(cmd_res_size)
+            recv_message, client = mySocket.recvfrom(2048)
+            print("recv_message len of: ",len(recv_message),"data is :", recv_message)
+            # cmd_res_size = mySocket.recv(2048)
+            # print("cmd_res_size len of: ",len(cmd_res_size))
+            # print(cmd_res_size)
         except Exception as e:
             print(e)
 

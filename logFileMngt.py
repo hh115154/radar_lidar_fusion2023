@@ -1,10 +1,11 @@
 
 dict_video2radar = {'highway.mp4':"Record_2021-12-05_11-31-31.someip.ars540.hex",
-                    'bicycle.mp4':"Record_2021-10-14_16-43-39.someip.ars540.hex"}
+                    'bicycle.mp4':"Record_2021-10-14_16-43-39.someip.ars540.hex",
+                    'Record_2022-06-22_15-34-14.mp4':'Record_2022-06-22_15-34-14.someip.ars540.hex'}
 
 radar_logfile_path = ""#"./"
 
-class RadarLogFileInfo():
+class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
     def __init__(self, log_file_name):
         self.log_file_name = log_file_name
         self.log_full_file_path = radar_logfile_path + log_file_name

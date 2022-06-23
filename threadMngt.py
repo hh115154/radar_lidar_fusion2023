@@ -11,7 +11,7 @@ import presentationLayer
 from mySocket import MyUdpSocket
 import protocol
 import procAsamMdf
-import CppApi
+# import CppApi
 import logFileMngt
 
 class BaseThread(QThread):
@@ -164,6 +164,24 @@ class VideoPlayThread(BaseThread):
 		self.cap.release()
 		cv2.destroyAllWindows()
 
+def draw_obj(data_bytes):
+	obj_buf = data_bytes[16:9385 + 16]
+	obj_list = protocol.ARS548_ObjectList(obj_buf)
+	objPresentations = []
+	objNr = obj_list.ObjectList_NumOfObjects
+	for j in range(objNr):
+		objPresentations.append(obj_list.ObjectList_Objects[j].get_object_draw_info())
+	return objPresentations , obj_list.ObjectList_Objects
+
+def draw_PCL(bytes_data, pcl_color_map):
+	buf = bytes_data[16:35305 + 16]
+	dList = protocol.ARS548_DetectionList(buf)
+	# dict from color to pos
+	pcl_color_map.clear_dict()
+	for i in range(dList.List_NumOfDetections):
+		pcl_color_map.add_point_to_dict(dList.List_Detections[i].getPosn())
+	return pcl_color_map
+
 
 class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 	pcl_posn_signal = pyqtSignal(list)
@@ -176,17 +194,25 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		self.frmNr = 0
 		self.mdf = procAsamMdf.MdfFile()
 		self.timestamp = time.time()
-		self.presentationPCL = presentationLayer.my_pcl()
+		self.presentationPCL = presentationLayer.Pcl_Color()
+		self.counter = 0
 
 	def draw_obj(self,data_bytes):
+		self.counter +=1
+		self.counter %= 20
 		obj_buf = data_bytes[16:9385 + 16]
 		obj_list = protocol.ARS548_ObjectList(obj_buf)
-		self.orgRadar_objInfo_signal(obj_list)
 		objPresentations = []
-		for j in range(obj_list.ObjectList_NumOfObjects):
-			# if obj_list.ObjectList_Objects[j].u_StatusMovement == 1:
+		objNr = obj_list.ObjectList_NumOfObjects
+		for j in range(objNr):
 			objPresentations.append(obj_list.ObjectList_Objects[j].get_object_draw_info())
-		self.orgRadar_obj_signal.emit(objPresentations)
+
+		if self.counter == 0: # reduce the frequency of data showing
+			self.orgRadar_objInfo_signal.emit(obj_list.ObjectList_Objects[0:obj_list.ObjectList_NumOfObjects])
+		else:
+			self.orgRadar_obj_signal.emit(objPresentations)
+
+
 
 	def draw_PCL(self, bytes_data):
 		buf = bytes_data[16:35305 + 16]
@@ -235,8 +261,6 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 			if self._isPause:
 				self.cond.wait(self.mutex)
 			print("OriginalRadarThread is running")
-
-
 			try:
 				recv_message, client = self.adapter_socket.udp_socket.recvfrom(self.adapter_socket.rcvBufLen)
 				# if 50 == len(recv_message):
@@ -286,16 +310,20 @@ class ReadRadarLogFileThread(BaseThread):
 	log_obj_signal = pyqtSignal(list)
 	road_lane_signal = pyqtSignal(list, list)
 	update_progress_signal = pyqtSignal()
-	def __init__(self, video_file_name):
+	log_objInfo_signal = pyqtSignal(list)
+	def __init__(self, video_file_name): #区分视频文件还是hex
 		super(ReadRadarLogFileThread, self).__init__()
-		logFileName = logFileMngt.dict_video2radar[video_file_name]
+		if video_file_name.endswith(".hex"):
+			logFileName = video_file_name
+		else:
+			logFileName = logFileMngt.dict_video2radar[video_file_name]
 		self.logFile = logFileMngt.RadarLogFileInfo(logFileName)
 
 
 		self.finishDrawObj = False
 		self.finishDrawPCL = False
 		self.objctList = []
-		self.presentationPCL = presentationLayer.my_pcl()
+		self.presentationPCL = presentationLayer.Pcl_Color()
 
 	def draw_PCL(self,bytes_data):
 		buf = bytes_data[16:35305 + 16]
@@ -306,7 +334,6 @@ class ReadRadarLogFileThread(BaseThread):
 		self.presentationPCL.clear_dict()
 
 		colors = []
-		# add road lane
 		xs = []
 		ys = []
 		zs = []
@@ -332,13 +359,6 @@ class ReadRadarLogFileThread(BaseThread):
 
 			posn = x, y, z
 			pos.append(posn)
-		# roadLane =CppApi.RoadLane(xs, ys, zs, rcs,len(xs))
-		# self.road_lane_signal.emit(roadLane.le_coef, roadLane.ri_coef)
-		# roadLane = dList.get_road_lane(xs, ys, zs, rcs)
-
-		self.objctList = CppApi.Track_Object_List(f_Range=f_Range, f_AzimuthAngle=f_AzimuthAngle,
-												  f_ElevationAngle=f_ElevationAngle, rcs=rcs,rel_spd=rel_speed)
-		# self.draw_pingbao_obj()
 		self.log_pcl_signal.emit(self.presentationPCL.dict_hight2color)
 
 	def draw_obj(self,data_bytes):
@@ -346,7 +366,6 @@ class ReadRadarLogFileThread(BaseThread):
 		obj_list = protocol.ARS548_ObjectList(obj_buf)
 		objPresentations = []
 		for j in range(obj_list.ObjectList_NumOfObjects):
-			# if obj_list.ObjectList_Objects[j].u_StatusMovement == 1:
 			objPresentations.append(obj_list.ObjectList_Objects[j].get_object_draw_info())
 		self.log_obj_signal.emit(objPresentations)
 
@@ -370,9 +389,14 @@ class ReadRadarLogFileThread(BaseThread):
 				self.cond.wait(self.mutex)
 
 			pcl_dataBytes, obj_dataBytes = self.logFile.get_data_bytes()
-			self.draw_PCL(pcl_dataBytes)
+			# self.draw_PCL(pcl_dataBytes)
+			pclList = draw_PCL(pcl_dataBytes, self.presentationPCL)
+			self.log_pcl_signal.emit(pclList.dict_hight2color)
 
-			self.draw_obj(obj_dataBytes)  # draw obj from original log data from ars548
+			drawBoxList, objList = draw_obj(obj_dataBytes)
+			self.log_obj_signal.emit(drawBoxList)
+			self.log_objInfo_signal.emit(objList)
+
 
 			print("LogFileReadThread is running")
 			self.pause()

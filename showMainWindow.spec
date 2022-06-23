@@ -1,15 +1,14 @@
 # -*- mode: python ; coding: utf-8 -*-
-import sys
-sys.setrecursionlimit(5000)
+
 
 block_cipher = None
 
 
 a = Analysis(
-    ['showMainWindow.py', 'testMainWindow_Ui.py', 'mySocket.py', 'protocol.py', 'threadMngt.py', 'myControls.py', 'presentationLayer.py', 'procAsamMdf.py', 'CppApi.py', 'logFileMngt.py'],
-    pathex=['C:\\CodeProjects\\4D_Radar'],
+    ['showMainWindow.py'],
+    pathex=[],
     binaries=[],
-    datas=[('images\\*', 'images'),('cppdll\\*.dll','cppdll')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -29,19 +28,17 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='bhap_4D_Radar_Tool',
+    name='showMainWindow',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-	icon='C:\\CodeProjects\\4D_Radar\\logo.ico'
-
 )

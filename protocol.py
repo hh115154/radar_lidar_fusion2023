@@ -2,7 +2,7 @@ import math
 import struct
 import presentationLayer
 import numpy as np
-import CppApi
+# import CppApi
 
 
 AR548_Detection_AzimuthAngle_Min = -3.14
@@ -122,8 +122,9 @@ class ARS548_DetectionList:
             self.List_Detections.append(dtctn)
 
     def get_road_lane(self,xs, ys, zs, rcs):
-        lane = CppApi.RoadLane(xs, ys, zs, rcs,self.List_NumOfDetections)
-        return lane
+        pass
+        # lane = CppApi.RoadLane(xs, ys, zs, rcs,self.List_NumOfDetections)
+        # return lane
 
 
 #get index of the list max vale
