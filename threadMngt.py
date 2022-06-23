@@ -3,9 +3,9 @@ __author__ = 'Yang HongXu'
 import time
 import struct
 import cv2
-from PyQt5 import QtGui
+from PyQt5 import QtGui,QtCore
 from PyQt5.QtCore import QThread, pyqtSignal,QWaitCondition,QMutex,QDateTime
-import os.path
+import os
 
 import presentationLayer
 from mySocket import MyUdpSocket
@@ -171,7 +171,9 @@ def draw_obj(data_bytes):
 	objNr = obj_list.ObjectList_NumOfObjects
 	for j in range(objNr):
 		objPresentations.append(obj_list.ObjectList_Objects[j].get_object_draw_info())
-	return objPresentations , obj_list.ObjectList_Objects
+	time_s = obj_list.Timestamp_Seconds
+	time_us = obj_list.Timestamp_Nanoseconds
+	return objPresentations , obj_list.ObjectList_Objects,time_s,time_us
 
 def draw_PCL(bytes_data, pcl_color_map):
 	buf = bytes_data[16:35305 + 16]
@@ -180,7 +182,9 @@ def draw_PCL(bytes_data, pcl_color_map):
 	pcl_color_map.clear_dict()
 	for i in range(dList.List_NumOfDetections):
 		pcl_color_map.add_point_to_dict(dList.List_Detections[i].getPosn())
-	return pcl_color_map
+	time_s = dList.Timestamp_Seconds
+	time_us = dList.Timestamp_Nanoseconds
+	return pcl_color_map, time_s,time_us
 
 
 class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
@@ -311,63 +315,50 @@ class ReadRadarLogFileThread(BaseThread):
 	road_lane_signal = pyqtSignal(list, list)
 	update_progress_signal = pyqtSignal()
 	log_objInfo_signal = pyqtSignal(list)
-	def __init__(self, video_file_name): #区分视频文件还是hex
+	log_showPic_signal = pyqtSignal(str)
+	def __init__(self, log_file_name): #区分视频文件还是hex
 		super(ReadRadarLogFileThread, self).__init__()
-		if video_file_name.endswith(".hex"):
-			logFileName = video_file_name
+		if log_file_name.endswith(".hex"):
+			pass
 		else:
-			logFileName = logFileMngt.dict_video2radar[video_file_name]
-		self.logFile = logFileMngt.RadarLogFileInfo(logFileName)
+			print('select a hex file, please!')
+			return
+
+		self.picFileList,self.logFilePath = self.detectPictures(log_file_name)
 
 
+
+		if self.picFileList:
+			self.log_showPic_signal.emit(self.logFilePath + '\\' + self.picFileList[0])
+			self.currPicNr = 0
+
+		self.logFile = logFileMngt.RadarLogFileInfo(log_file_name)
+		self.picShowInterval_us = 50 * 1000  # time interval us
+		self.timeStamp_s = 0
+		self.timeStamp_us = 0
 		self.finishDrawObj = False
 		self.finishDrawPCL = False
 		self.objctList = []
 		self.presentationPCL = presentationLayer.Pcl_Color()
-
-	def draw_PCL(self,bytes_data):
-		buf = bytes_data[16:35305 + 16]
-		dList = protocol.ARS548_DetectionList(buf)
-		pos = []
-
-		# dict from color to pos
-		self.presentationPCL.clear_dict()
-
-		colors = []
-		xs = []
-		ys = []
-		zs = []
-		f_AzimuthAngle = []
-		f_ElevationAngle = []
-		f_Range = []
-		rcs = []
-		rel_speed = []
+	def split_picFileName(self,fileName):
+		affixesStr = ''
+		num = 0
+		if fileName:
+			affixesStr = fileName[0:33]
+			tmp = fileName[33:]
+			num = int(tmp[:-4])
+		return affixesStr,num
 
 
+	def detectPictures(self, logPath):
+		picFileList =[]
+		fileInfo = QtCore.QFileInfo(logPath)
+		curPath = fileInfo.absolutePath()
+		file_list = os.listdir(curPath)
+		if len(file_list) > 1:
+			picFileList = file_list[1:]
 
-		for i in range(dList.List_NumOfDetections):
-			self.presentationPCL.add_point_to_dict(dList.List_Detections[i].getPosn())
-			x, y, z = dList.List_Detections[i].getPosn()
-			xs.append(y)
-			ys.append(x)
-			zs.append(z)
-			f_AzimuthAngle.append(dList.List_Detections[i].f_AzimuthAngle)
-			f_ElevationAngle.append(dList.List_Detections[i].f_ElevationAngle)
-			f_Range.append(dList.List_Detections[i].f_Range)
-			rcs.append(dList.List_Detections[i].s_RCS)
-			rel_speed.append(dList.List_Detections[i].f_RangeRate)
-
-			posn = x, y, z
-			pos.append(posn)
-		self.log_pcl_signal.emit(self.presentationPCL.dict_hight2color)
-
-	def draw_obj(self,data_bytes):
-		obj_buf = data_bytes[16:9385 + 16]
-		obj_list = protocol.ARS548_ObjectList(obj_buf)
-		objPresentations = []
-		for j in range(obj_list.ObjectList_NumOfObjects):
-			objPresentations.append(obj_list.ObjectList_Objects[j].get_object_draw_info())
-		self.log_obj_signal.emit(objPresentations)
+		return picFileList, curPath
 
 	def draw_pingbao_obj(self):
 		objPresentations = []
@@ -382,6 +373,21 @@ class ReadRadarLogFileThread(BaseThread):
 	def update_progress(self):
 		self.update_progress_signal.emit()
 
+	def time_up(self,timeStamp_s,timeStamp_us):
+		timeUp = False
+		if self.timeStamp_us < timeStamp_us:
+			if timeStamp_us - self.timeStamp_us > self.picShowInterval_us:
+				self.timeStamp_us = timeStamp_us
+				self.timeStamp_s = timeStamp_s
+				timeUp = True
+		else:
+			if self.timeStamp_s < timeStamp_s:
+				if 0xFFFFFFFF - self.timeStamp_us + timeStamp_us > self.picShowInterval_us:
+					self.timeStamp_us = timeStamp_us
+					self.timeStamp_s = timeStamp_s
+					timeUp = True
+		return timeUp
+
 	def run(self) -> None:
 		while True:
 			self.mutex.lock()
@@ -389,13 +395,19 @@ class ReadRadarLogFileThread(BaseThread):
 				self.cond.wait(self.mutex)
 
 			pcl_dataBytes, obj_dataBytes = self.logFile.get_data_bytes()
-			# self.draw_PCL(pcl_dataBytes)
-			pclList = draw_PCL(pcl_dataBytes, self.presentationPCL)
-			self.log_pcl_signal.emit(pclList.dict_hight2color)
 
-			drawBoxList, objList = draw_obj(obj_dataBytes)
-			self.log_obj_signal.emit(drawBoxList)
-			self.log_objInfo_signal.emit(objList)
+			if pcl_dataBytes:
+				pclList,timeStamp_s,timeStamp_us = draw_PCL(pcl_dataBytes, self.presentationPCL)
+				self.log_pcl_signal.emit(pclList.dict_hight2color)
+			if obj_dataBytes:
+				drawBoxList, objList,timeStamp_s,timeStamp_us = draw_obj(obj_dataBytes)
+				self.log_obj_signal.emit(drawBoxList)
+				self.log_objInfo_signal.emit(objList)
+
+			if self.picFileList:
+				if self.time_up(timeStamp_s,timeStamp_us):
+					self.currPicNr +=1
+					self.log_showPic_signal.emit(self.logFilePath + '\\' + self.picFileList[self.currPicNr])
 
 
 			print("LogFileReadThread is running")

@@ -7,12 +7,14 @@ radar_logfile_path = ""#"./"
 
 class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
     def __init__(self, log_file_name):
+
         self.log_file_name = log_file_name
         self.log_full_file_path = radar_logfile_path + log_file_name
         file = open(self.log_full_file_path, "r")
         self.fileLines = file.readlines()
         self.log_file_size = len(self.fileLines)
         self.currLineNr = 0
+
 
     def getPrograss(self):
         return self.currLineNr/self.log_file_size
@@ -27,6 +29,9 @@ class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
             self.currLineNr += 1
 
     def get_data_bytes(self):
+        pcl_dataBytes = 0
+        obj_dataBytes = 0
+
         bytes_data = bytes.fromhex(self.get_current_line())
         line_len = len(bytes_data)
 

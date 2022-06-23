@@ -344,6 +344,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread.log_pcl_signal.connect(self.show_radar)  # 仿真文件数据
         self.readRadarLogFileThread.log_obj_signal.connect(self.show_objects)  # 仿真文件数据
         self.readRadarLogFileThread.log_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
+        self.readRadarLogFileThread.log_showPic_signal.connect(self.show_one_pic) # 回放一张图片
 
         self.readRadarLogFileThread.update_progress_signal.connect(self.update_radar_progress)  # 仿真文件数据
         self.readRadarLogFileThread.start()
@@ -354,7 +355,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.btnStop.setDisabled(False)
         self.btnPlay.setIcon(self.iconPause)
 
-
+    def show_one_pic(self, picFullPath):
+        print(picFullPath)
 
     @pyqtSlot()  ##播放
     def on_btnPlay_clicked(self):
