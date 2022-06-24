@@ -1,20 +1,53 @@
+from PyQt5 import QtCore
+import os
 
-dict_video2radar = {'highway.mp4':"Record_2021-12-05_11-31-31.someip.ars540.hex",
-                    'bicycle.mp4':"Record_2021-10-14_16-43-39.someip.ars540.hex",
-                    'Record_2022-06-22_15-34-14.mp4':'Record_2022-06-22_15-34-14.someip.ars540.hex'}
-
-radar_logfile_path = ""#"./"
 
 class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
-    def __init__(self, log_file_name):
+    def __init__(self, log_file_name):#full path
 
-        self.log_file_name = log_file_name
-        self.log_full_file_path = radar_logfile_path + log_file_name
-        file = open(self.log_full_file_path, "r")
+        self.log_file_full_path = log_file_name
+
+        fileInfo = QtCore.QFileInfo(self.log_file_full_path)
+        self.logFileFolderPath = fileInfo.absolutePath()
+
+        self.log_file_name = fileInfo.fileName()
+        self.strNameAffixes = self.log_file_name[0:26]
+        self.strNameAffixes += '_Frame_'
+
+        file_list = os.listdir(self.logFileFolderPath)
+        self.sortedPicFileList = []
+        self.currPicFileNr = 0
+        self.maxPicFileNr = 0
+        self.hasPicFiles = False
+        if len(file_list) >1:
+            self.hasPicFiles = True
+            self.sortPicFileNameAsNum(file_list[1:])
+
+        file = open(self.log_file_full_path, "r")
         self.fileLines = file.readlines()
         self.log_file_size = len(self.fileLines)
         self.currLineNr = 0
 
+    def sortPicFileNameAsNum(self, picFileList):
+        numLenMap = {1: [], 2: [], 3: [], 4: [], 5: []}
+        for picFile in picFileList:
+            numLenMap[len(self.getPicNameNrStr(picFile))].append(picFile)
+
+        for i in range(len(numLenMap)):
+            if numLenMap[i+1]:
+                self.sortedPicFileList.extend(numLenMap[i+1])
+        self.currPicFileNr = self.getPicNameNr(self.sortedPicFileList[0])
+        self.maxPicFileNr = self.getPicNameNr(self.sortedPicFileList[-1])
+
+
+
+    def getPicNameNr(self,strPicName):
+        tmp = strPicName[33:]
+        return int(tmp[:-4])
+
+    def getPicNameNrStr(self,strPicName):
+        tmp = strPicName[33:]
+        return tmp[:-4]
 
     def getPrograss(self):
         return self.currLineNr/self.log_file_size

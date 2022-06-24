@@ -6,7 +6,7 @@ import cv2
 from PyQt5 import QtGui,QtCore
 from PyQt5.QtCore import QThread, pyqtSignal,QWaitCondition,QMutex,QDateTime
 import os
-
+import re
 import presentationLayer
 from mySocket import MyUdpSocket
 import protocol
@@ -324,15 +324,11 @@ class ReadRadarLogFileThread(BaseThread):
 			print('select a hex file, please!')
 			return
 
-		self.picFileList,self.logFilePath = self.detectPictures(log_file_name)
-
-
-
-		if self.picFileList:
-			self.log_showPic_signal.emit(self.logFilePath + '\\' + self.picFileList[0])
-			self.currPicNr = 0
-
 		self.logFile = logFileMngt.RadarLogFileInfo(log_file_name)
+		if self.logFile.hasPicFiles:
+			self.log_showPic_signal.emit(self.logFile.logFileFolderPath + '/'
+										 + self.logFile.strNameAffixes + str(self.logFile.currPicFileNr) + '.jpg')
+
 		self.picShowInterval_us = 50 * 1000  # time interval us
 		self.timeStamp_s = 0
 		self.timeStamp_us = 0
@@ -340,25 +336,7 @@ class ReadRadarLogFileThread(BaseThread):
 		self.finishDrawPCL = False
 		self.objctList = []
 		self.presentationPCL = presentationLayer.Pcl_Color()
-	def split_picFileName(self,fileName):
-		affixesStr = ''
-		num = 0
-		if fileName:
-			affixesStr = fileName[0:33]
-			tmp = fileName[33:]
-			num = int(tmp[:-4])
-		return affixesStr,num
 
-
-	def detectPictures(self, logPath):
-		picFileList =[]
-		fileInfo = QtCore.QFileInfo(logPath)
-		curPath = fileInfo.absolutePath()
-		file_list = os.listdir(curPath)
-		if len(file_list) > 1:
-			picFileList = file_list[1:]
-
-		return picFileList, curPath
 
 	def draw_pingbao_obj(self):
 		objPresentations = []
@@ -403,11 +381,13 @@ class ReadRadarLogFileThread(BaseThread):
 				drawBoxList, objList,timeStamp_s,timeStamp_us = draw_obj(obj_dataBytes)
 				self.log_obj_signal.emit(drawBoxList)
 				self.log_objInfo_signal.emit(objList)
-
-			if self.picFileList:
+			print(str(timeStamp_s), ':',str(timeStamp_us))
+			if self.logFile.currPicFileNr <= self.logFile.maxPicFileNr:
 				if self.time_up(timeStamp_s,timeStamp_us):
-					self.currPicNr +=1
-					self.log_showPic_signal.emit(self.logFilePath + '\\' + self.picFileList[self.currPicNr])
+					print('time is up====',str(timeStamp_s), ':', str(timeStamp_us))
+					self.logFile.currPicFileNr += 1
+					self.log_showPic_signal.emit(self.logFile.logFileFolderPath + '/'
+												 + self.logFile.strNameAffixes + str(self.logFile.currPicFileNr) + '.jpg')
 
 
 			print("LogFileReadThread is running")

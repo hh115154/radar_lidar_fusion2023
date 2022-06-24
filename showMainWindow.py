@@ -10,6 +10,7 @@ from PyQt5 import QtCore,QtGui
 import pyqtgraph.opengl as gl
 import pyqtgraph
 
+import cv2
 import threadMngt
 from PyQt5.QtMultimedia import (QCameraInfo,QCameraImageCapture,
       QImageEncoderSettings,QMultimedia,QVideoFrame,QSound,QCamera)
@@ -140,9 +141,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.GLView_OrgRadar.addPointsDict()
 
     def show_objectsInfo(self, objList):
-        print(len(objList))
         for i in range(len(objList)):
-
             row = 0
             self.tableItem(row, i, objList[i].u_ID)
             row+=1
@@ -250,8 +249,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def set_simulink_logfile_mode(self):
         # self.viewFinder.setHidden(True)
         # self.viewFinder.setDisabled(True)
-        self.lable_camera.setHidden(True)
-        self.lable_camera.setDisabled(True)
+        # self.lable_camera.setHidden(True)
+        # self.lable_camera.setDisabled(True)
         self.videoWidget.setHidden(False)
         self.videoWidget.setDisabled(False)
         self.btnPlay.setDisabled(True)
@@ -357,6 +356,26 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     def show_one_pic(self, picFullPath):
         print(picFullPath)
+
+        self.lable_camera.resize(640, 480)
+
+        # 加载图片,并自定义图片展示尺寸
+        image = QtGui.QPixmap(picFullPath).scaled(640, 480)
+        # 显示图片
+        self.lable_camera.setPixmap(image)
+
+        # # 通过cv读取图片
+        # img = cv2.imread(picFullPath)
+        # # 通道转化
+        # RGBImg = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # # 将图片转化成Qt可读格式
+        # image = QtGui.QImage(RGBImg, RGBImg.shape[1], RGBImg.shape[0], QtGui.QImage.FormatRGB888)
+        #
+        # # 加载图片,并自定义图片展示尺寸
+        # image = QtGui.QPixmap(image).scaled(640, 480)
+        # # 显示图片
+        # self.lable_camera.setPixmap(image)
+
 
     @pyqtSlot()  ##播放
     def on_btnPlay_clicked(self):

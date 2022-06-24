@@ -30,24 +30,28 @@ class Ui_MainWindow(object):
         # verticalLayout = QtWidgets.QVBoxLayout()
 
         #left.top
-        self.swt_camera_stacklayout = QtWidgets.QStackedLayout()
+        # self.swt_camera_stacklayout = QtWidgets.QStackedLayout()
+        self.swt_camera_stackWidget= QtWidgets.QStackedWidget()
 
         self.videoWidget = QVideoWidget()
         self.videoWidget.setObjectName("videoWidget")
-        self.swt_camera_stacklayout.addWidget(self.videoWidget)
+
         #
         # self.viewFinder = QCameraViewfinder()
         # self.viewFinder.setMinimumSize(QtCore.QSize(150, 0))
         # self.viewFinder.setObjectName("viewFinder")
         # self.swt_camera_stacklayout.addWidget(self.viewFinder)
 
-        self.lable_camera = QtWidgets.QLabel()
+        self.lable_camera = QtWidgets.QLabel() # 显示离线图片
         self.lable_camera.setObjectName("lable_camera")
         self.lable_camera.setScaledContents(True)
 
+        self.swt_camera_stackWidget.addWidget(self.lable_camera)
+        self.swt_camera_stackWidget.addWidget(self.videoWidget)
+
         # self.lable_camera.setDisabled(True)
         # self.videoWidget.setDisabled(True)
-        self.splitter_vedio_pcl.addWidget(self.lable_camera)
+        self.splitter_vedio_pcl.addWidget(self.swt_camera_stackWidget)
 
         # splitter_vedio_pcl.addWidget(self.swt_camera_stacklayout)
 

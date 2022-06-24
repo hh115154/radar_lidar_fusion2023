@@ -53,6 +53,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
 
         self.cb.currentIndexChanged.connect(self.RunModeChange)
+        self.cb.activated[int].connect(self.swt_camera_stackWidget.setCurrentIndex)
 
         self.camera = None  # QCamera对象
         cameras = QCameraInfo.availableCameras()  # list[QCameraInfo]
