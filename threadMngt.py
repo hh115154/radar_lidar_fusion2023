@@ -39,17 +39,6 @@ class BaseThread(QThread):
 	# 			self.cond.wait(self.mutex)
 	# 		self.mutex.unlock()
 
-class TestThread(BaseThread):
-	def run(self) -> None:
-		print("TestThread start!!")
-		while 1:
-			print("TestThread is running")
-	def __del__(self):
-		print("TestThread is deleted")
-
-	def quit(self) -> None:
-		print("TestThread is quit")
-
 
 class VideoRecordThread(BaseThread):  # show and record camera
 	def __init__(self):
@@ -116,81 +105,6 @@ class VideoRecordThread(BaseThread):  # show and record camera
 		self.videoWriter = cv2.VideoWriter(self.videoFileName, self.fourcc, self.outpFps, self.outpSize)
 
 
-class VideoPlayThread(BaseThread):
-
-	def __init__(self):
-		super(VideoPlayThread, self).__init__()
-		self.cap = 0
-		self.bPlaying = False
-		self.newSize = (640, 480)
-		self.ret = False
-		self.frame = 0
-		self.showImage = 0
-		self.fps = int(30)
-		self.frames = logFileMngt.getFrames()
-		self.videoFileName = ""
-
-	def run(self):
-		# self.videoFileName = "log.mp4"
-		# self.videoFileName = "video.mp4"
-		self.cap = cv2.VideoCapture(self.videoFileName)
-		self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
-		self.ret, self.frame = self.cap.read()
-
-		if self.cap.isOpened():
-			self.bPlaying = True
-		else:
-			print("视频打开失败")
-
-		while self.ret and self.isRunning():
-			self.mutex.lock()
-			if self._isPause:
-				self.cond.wait(self.mutex)
-			try:
-				show = cv2.resize(self.frame, self.newSize)
-				show = cv2.cvtColor(show, cv2.COLOR_BGR2RGB)  # 视频色彩转换回RGB，这样才是现实的颜色
-				self.showImage = QtGui.QImage(show.data, show.shape[1], show.shape[0],
-											  QtGui.QImage.Format_RGB888)  # 把读取到的视频数据变成QImage形式
-				print("VideoPlayThread is running!")
-			except Exception as e:
-				print(e)
-
-			self.mutex.unlock()
-			# 退出播放
-			key = cv2.waitKey(int(1200/self.fps))  # 1000ms/fps
-			self.ret, self.frame = self.cap.read()
-			if key == 27:  # 按键esc
-				break
-
-		print("视频播放完成！")
-
-	def quit(self):
-		super(VideoPlayThread, self).quit()
-		self.cap.release()
-		cv2.destroyAllWindows()
-
-def draw_obj(data_bytes):
-	obj_buf = data_bytes[16:9385 + 16]
-	obj_list = protocol.ARS548_ObjectList(obj_buf)
-	objPresentations = []
-	objNr = obj_list.ObjectList_NumOfObjects
-	for j in range(objNr):
-		objPresentations.append(obj_list.ObjectList_Objects[j].get_object_draw_info())
-
-	time_stamp_s = obj_list.getTimeStamp_s()
-	return objPresentations , obj_list.ObjectList_Objects, time_stamp_s
-
-def draw_PCL(bytes_data, pcl_color_map):
-	buf = bytes_data[16:35305 + 16]
-	dList = protocol.ARS548_DetectionList(buf)
-	# dict from color to pos
-	pcl_color_map.clear_dict()
-	for i in range(dList.List_NumOfDetections):
-		pcl_color_map.add_point_to_dict(dList.List_Detections[i].getPosn())
-	time_stamp_s = dList.getTimeStamp_s()
-	return pcl_color_map, time_stamp_s
-
-
 class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 	pcl_posn_signal = pyqtSignal(list)
 	orgRadar_pcl_signal = pyqtSignal(dict)
@@ -210,57 +124,17 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		self.counter %= 20
 		obj_buf = data_bytes[16:9385 + 16]
 		obj_list = protocol.ARS548_ObjectList(obj_buf)
-		objPresentations = []
-		objNr = obj_list.ObjectList_NumOfObjects
-		for j in range(objNr):
-			objPresentations.append(obj_list.ObjectList_Objects[j].get_object_draw_info())
+		objPresentations = obj_list.getPresentationInfo()
 
 		if self.counter == 0: # reduce the frequency of data showing
 			self.orgRadar_objInfo_signal.emit(obj_list.ObjectList_Objects[0:obj_list.ObjectList_NumOfObjects])
 		else:
 			self.orgRadar_obj_signal.emit(objPresentations)
 
-
-
 	def draw_PCL(self, bytes_data):
 		buf = bytes_data[16:35305 + 16]
 		dList = protocol.ARS548_DetectionList(buf)
-		pos = []
-
-		# dict from color to pos
-		self.presentationPCL.clear_dict()
-
-		colors = []
-		# add road lane
-		xs = []
-		ys = []
-		zs = []
-		f_AzimuthAngle = []
-		f_ElevationAngle = []
-		f_Range = []
-		rcs = []
-		rel_speed = []
-
-
-
-		for i in range(dList.List_NumOfDetections):
-			self.presentationPCL.add_point_to_dict(dList.List_Detections[i].getPosn())
-			x, y, z = dList.List_Detections[i].getPosn()
-			xs.append(y)
-			ys.append(x)
-			zs.append(z)
-			f_AzimuthAngle.append(dList.List_Detections[i].f_AzimuthAngle)
-			f_ElevationAngle.append(dList.List_Detections[i].f_ElevationAngle)
-			f_Range.append(dList.List_Detections[i].f_Range)
-			rcs.append(dList.List_Detections[i].s_RCS)
-			rel_speed.append(dList.List_Detections[i].f_RangeRate)
-
-			posn = x, y, z
-			pos.append(posn)
-
-
-
-		# self.draw_pingbao_obj()
+		self.presentationPCL = dList.getPresentationPcl()
 		self.orgRadar_pcl_signal.emit(self.presentationPCL.dict_hight2color)
 
 	def run(self) -> None:
@@ -291,32 +165,15 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 					self.draw_PCL(bytes_data)
 					# print("data len 35336", data)
 
-
-
-				# bytes_data = int.from_bytes(data, byteorder='big').to_bytes(44, byteorder='big')
-				# # add point
-				# app_data = protocol.ARS548_Detection(bytes_data)
-				# ptPosn = app_data.getPosn()
-				# ptList = []
-				# ptList.append(ptPosn)
-				# self.pcl_posn_signal.emit(ptList)
-				#
-				# self.timestamp = time.time()
-				# self.frmNr += 1
-				# self.mdf.appendNewTimeStampData(app_data, self.timestamp)
 			except Exception as e:
 				print(e)
 
-
-
-			# print(app_data)
 			self.mutex.unlock()
 
 
 class ReadRadarLogFileThread(BaseThread):
 	log_pcl_signal = pyqtSignal(dict,int)
 	log_obj_signal = pyqtSignal(list)
-	road_lane_signal = pyqtSignal(list, list)
 	log_objInfo_signal = pyqtSignal(list)
 	log_showPic_signal = pyqtSignal(str)
 	def __init__(self, log_file_name): #区分视频文件还是hex
@@ -338,33 +195,13 @@ class ReadRadarLogFileThread(BaseThread):
 		self.objctList = []
 		self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
 
-
-	def draw_pingbao_obj(self):
-		objPresentations = []
-		for obj in self.objctList.object_list:
-			objPresentations.append(presentationLayer.MyCuboid(length=obj.length, width=obj.width,
-															   x=obj.x, y=obj.y,z=obj.z, _type=obj.typ, _id=obj.id,
-																_absV_x=obj.length, _absV_y=obj.width,_stMovement=obj.movement_state))
-
-
-		self.log_obj_signal.emit(objPresentations)
-
-	def time_up(self,timeStamp_s):
-		timeUp = False
-		print(self.timeStamp_s,timeStamp_s)
-		if self.timeStamp_s < timeStamp_s or abs(self.timeStamp_s - timeStamp_s) >100:
-			if timeStamp_s - self.timeStamp_s > self.picShowInterval_s:
-				self.timeStamp_s = timeStamp_s
-				timeUp = True
-
-		return timeUp
-
 	def run(self) -> None:
 		while True:
 			self.mutex.lock()
 			if self._isPause:
 				self.cond.wait(self.mutex)
 
+			# obj
 			while len(self.currLineDataBytes) == ConfigConstantData.ObjListByteNr:
 				objList = self.logFile.parse_obj_list(self.currLineDataBytes)
 				presentationObj = objList.getPresentationInfo()
@@ -373,6 +210,7 @@ class ReadRadarLogFileThread(BaseThread):
 			self.log_obj_signal.emit(presentationObj)
 			self.log_objInfo_signal.emit(objList.ObjectList_Objects)
 
+			# pcl
 			while len(self.currLineDataBytes) == ConfigConstantData.PclByteNr:
 				plcList = self.logFile.parse_pcl(self.currLineDataBytes)
 				timeStamp_s = plcList.getTimeStamp_s()
@@ -381,13 +219,11 @@ class ReadRadarLogFileThread(BaseThread):
 				self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
 			self.log_pcl_signal.emit(presentationPCL.dict_hight2color, self.logFile.currLineNr-1)
 
-
+			# pictures
 			picName = self.logFile.getNextPic()
-			print('time is up====',str(timeStamp_s),picName)
+			print('showing pic of', picName, 'at time of ',str(timeStamp_s))
 			self.log_showPic_signal.emit(picName)
 
-
-			print("LogFileReadThread is running")
 			self.pause()
 			self.mutex.unlock()
 

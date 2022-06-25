@@ -126,8 +126,11 @@ class Ui_MainWindow(object):
         self.btnOpen.setObjectName("btnOpen")
         btns_area_horizontallayout.addWidget(self.btnOpen)
 
-        self.left_button = QtWidgets.QPushButton("<<")
+        self.left_button = QtWidgets.QPushButton()
         self.left_button.setObjectName("left_button")
+        self.iconLeft_button = QtGui.QIcon()
+        self.iconLeft_button.addPixmap(QtGui.QPixmap("./images/610.bmp"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.left_button.setIcon(self.iconLeft_button)
         btns_area_horizontallayout.addWidget(self.left_button)
 
         self.btnPlay = QtWidgets.QPushButton()
@@ -139,8 +142,11 @@ class Ui_MainWindow(object):
         self.btnPlay.setObjectName("btnPlay")
         btns_area_horizontallayout.addWidget(self.btnPlay)
 
-        self.right_button = QtWidgets.QPushButton(">>")
+        self.right_button = QtWidgets.QPushButton()
         self.right_button.setObjectName("right_button")
+        self.icon_right_button = QtGui.QIcon()
+        self.icon_right_button.addPixmap(QtGui.QPixmap("./images/612.bmp"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.right_button.setIcon(self.icon_right_button)
         btns_area_horizontallayout.addWidget(self.right_button)
 
         self.iconPause = QtGui.QIcon()

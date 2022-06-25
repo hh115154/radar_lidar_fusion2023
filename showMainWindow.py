@@ -277,24 +277,15 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         else:  # 实时数据采集
             self.set_runtime_mode()
 
-
     # 快进
     def up_time(self):
         self.readRadarLogFileThread.logFile.next_line()
         self.readRadarLogFileThread.resume()
-        # num = self.player.position() + int(self.player.duration() / self.player_ms_step)
-        # self.player.setPosition(num)
-        self.readRadarLogFileThread.resume()
 
     def down_time(self):
-        # num = self.player.position() - int(self.player.duration() / self.player_ms_step)
-        # self.player.setPosition(num)
-        self.readRadarLogFileThread.logFile.currLineNr -=4
+        lineNr =  self.readRadarLogFileThread.logFile.currLineNr -4
+        self.readRadarLogFileThread.logFile.set_Progress(lineNr)
         self.readRadarLogFileThread.resume()
-
-
-
-        ##  ==========由connectSlotsByName()自动连接的槽函数============
 
     @pyqtSlot()  ##打开文件
     def on_btnOpen_clicked(self):

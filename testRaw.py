@@ -1,15 +1,10 @@
-import numpy as np
-import imageio
+#!/usr/bin/env python
 
-rawfile = np.fromfile('0.raw', dtype=np.float32)  # 以float32读图片
-print(rawfile.shape)
-# rawfile.shape = (20622,)
-print(rawfile.shape)
-b = rawfile.astype(np.uint8)  # 变量类型转换，float32转化为int8
-print(b.dtype)
-imageio.imwrite("0.jpg", b)
+import time
 
-import matplotlib.pyplot as pyplot
-
-pyplot.imshow(rawfile)
-
+t1 = time.time()
+file1 = open('test2.txt', 'a')
+for i in range(15000000):
+    print >> file1, 'AAAAAAAA'
+file1.close()
+print(time.time() - t1)
