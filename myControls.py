@@ -4,7 +4,9 @@ __author__ = 'Yang Hongxu'
 # @Time     : 2022/6/25 15:03
 import pyqtgraph.opengl as gl
 from OpenGL.GL import *
-from PyQt5 import QtGui
+from PyQt5 import QtGui,QtWidgets
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QSlider, QStyleOptionSlider, QStyle
 import math
 import numpy as np
 
@@ -215,6 +217,32 @@ class MyGLViewWidget(gl.GLViewWidget):
             textItem.setData(font=QtGui.QFont('Helvetica', 10))
             textItem.translate(-self.grid_width / 2, i -self.grid_length/2, 0)
             self.addItem(textItem)
+
+class JumpSlider(QSlider):
+
+    def mousePressEvent(self, event):
+        # 获取上面的拉动块位置
+        option = QStyleOptionSlider()
+        self.initStyleOption(option)
+        rect = self.style().subControlRect(
+            QStyle.CC_Slider, option, QStyle.SC_SliderHandle, self)
+        if rect.contains(event.pos()):
+            # 如果鼠标点击的位置在滑块上则交给Qt自行处理
+            super(JumpSlider, self).mousePressEvent(event)
+            return
+        if self.orientation() == Qt.Horizontal:
+            # 横向，要考虑invertedAppearance是否反向显示的问题
+            self.setValue(self.style().sliderValueFromPosition(
+                self.minimum(), self.maximum(),
+                event.x() if not self.invertedAppearance() else (self.width(
+                ) - event.x()), self.width()))
+        else:
+            # 纵向
+            self.setValue(self.style().sliderValueFromPosition(
+                self.minimum(), self.maximum(),
+                (self.height() - event.y()) if not self.invertedAppearance(
+                ) else event.y(), self.height()))
+
 
 # if __name__ == "__main__":
 # 	import sys

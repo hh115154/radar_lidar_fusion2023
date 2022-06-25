@@ -173,6 +173,11 @@ class ARS548_DetectionList:
     def getTimeStamp_s(self):
       return  self.Timestamp_Seconds + self.Timestamp_Nanoseconds/1000000000
 
+    def getPresentationPcl(self):
+        prst = presentationLayer.Pcl_Color()
+        for i in range(self.List_NumOfDetections):
+            prst.add_point_to_dict(self.List_Detections[i].getPosn())
+        return prst
 
 # get index of the list max vale
 def getMaxIndex(list):
@@ -377,6 +382,12 @@ class ARS548_ObjectList:
 
     def getTimeStamp_s(self):
       return  self.Timestamp_Seconds + self.Timestamp_Nanoseconds/1000000000
+
+    def getPresentationInfo(self):
+        objPresentations = []
+        for j in range(self.ObjectList_NumOfObjects):
+            objPresentations.append(self.ObjectList_Objects[j].get_object_draw_info())
+        return objPresentations
 
     def __repr__(self):
         print('-------------start print obj list-------------------')

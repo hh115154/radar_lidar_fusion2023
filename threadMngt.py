@@ -16,6 +16,7 @@ import protocol
 import procAsamMdf
 # import CppApi
 import logFileMngt
+import ConfigConstantData
 
 class BaseThread(QThread):
 	def __init__(self, parent=None):
@@ -48,6 +49,7 @@ class TestThread(BaseThread):
 
 	def quit(self) -> None:
 		print("TestThread is quit")
+
 
 class VideoRecordThread(BaseThread):  # show and record camera
 	def __init__(self):
@@ -185,7 +187,6 @@ def draw_PCL(bytes_data, pcl_color_map):
 	pcl_color_map.clear_dict()
 	for i in range(dList.List_NumOfDetections):
 		pcl_color_map.add_point_to_dict(dList.List_Detections[i].getPosn())
-
 	time_stamp_s = dList.getTimeStamp_s()
 	return pcl_color_map, time_stamp_s
 
@@ -279,14 +280,14 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 				# elif 803 == len(recv_message):
 				# 	data = struct.unpack('>803B', recv_message)
 				# 	print("data len 803",data)
-				if 9401 == len(recv_message): # objects
+				if ConfigConstantData.ObjListByteNr == len(recv_message): # objects
 					data = struct.unpack('>9401B', recv_message)
-					bytes_data = int.from_bytes(data, byteorder='big').to_bytes(9401, byteorder='big')
+					bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.ObjListByteNr, byteorder='big')
 					self.draw_obj(bytes_data)
 					# print("data len 9401", data)
-				elif 35336 == len(recv_message): # pcl
+				elif ConfigConstantData.PclByteNr == len(recv_message): # pcl
 					data = struct.unpack('>35336B', recv_message)
-					bytes_data = int.from_bytes(data, byteorder='big').to_bytes(35336, byteorder='big')
+					bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.PclByteNr, byteorder='big')
 					self.draw_PCL(bytes_data)
 					# print("data len 35336", data)
 
@@ -313,10 +314,9 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 
 
 class ReadRadarLogFileThread(BaseThread):
-	log_pcl_signal = pyqtSignal(dict)
+	log_pcl_signal = pyqtSignal(dict,int)
 	log_obj_signal = pyqtSignal(list)
 	road_lane_signal = pyqtSignal(list, list)
-	update_progress_signal = pyqtSignal()
 	log_objInfo_signal = pyqtSignal(list)
 	log_showPic_signal = pyqtSignal(str)
 	def __init__(self, log_file_name): #区分视频文件还是hex
@@ -336,7 +336,7 @@ class ReadRadarLogFileThread(BaseThread):
 		self.finishDrawObj = False
 		self.finishDrawPCL = False
 		self.objctList = []
-		self.presentationPCL = presentationLayer.Pcl_Color()
+		self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
 
 
 	def draw_pingbao_obj(self):
@@ -349,13 +349,10 @@ class ReadRadarLogFileThread(BaseThread):
 
 		self.log_obj_signal.emit(objPresentations)
 
-	def update_progress(self):
-		self.update_progress_signal.emit()
-
 	def time_up(self,timeStamp_s):
 		timeUp = False
 		print(self.timeStamp_s,timeStamp_s)
-		if self.timeStamp_s < timeStamp_s:
+		if self.timeStamp_s < timeStamp_s or abs(self.timeStamp_s - timeStamp_s) >100:
 			if timeStamp_s - self.timeStamp_s > self.picShowInterval_s:
 				self.timeStamp_s = timeStamp_s
 				timeUp = True
@@ -368,29 +365,30 @@ class ReadRadarLogFileThread(BaseThread):
 			if self._isPause:
 				self.cond.wait(self.mutex)
 
-			pcl_dataBytes, obj_dataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
+			while len(self.currLineDataBytes) == ConfigConstantData.ObjListByteNr:
+				objList = self.logFile.parse_obj_list(self.currLineDataBytes)
+				presentationObj = objList.getPresentationInfo()
+				self.logFile.next_line()
+				self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
+			self.log_obj_signal.emit(presentationObj)
+			self.log_objInfo_signal.emit(objList.ObjectList_Objects)
 
-			# print(self.logFile.getTimeStampByLineNr(self.logFile.currLineNr))
-			if pcl_dataBytes:
-				pclList,timeStamp_s = draw_PCL(pcl_dataBytes, self.presentationPCL)
-				self.log_pcl_signal.emit(pclList.dict_hight2color)
+			while len(self.currLineDataBytes) == ConfigConstantData.PclByteNr:
+				plcList = self.logFile.parse_pcl(self.currLineDataBytes)
+				timeStamp_s = plcList.getTimeStamp_s()
+				presentationPCL = plcList.getPresentationPcl()
+				self.logFile.next_line()
+				self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
+			self.log_pcl_signal.emit(presentationPCL.dict_hight2color, self.logFile.currLineNr-1)
 
-			if obj_dataBytes:
-				drawBoxList, objList,timeStamp_s = draw_obj(obj_dataBytes)
-				self.log_obj_signal.emit(drawBoxList)
-				self.log_objInfo_signal.emit(objList)
-			print(str(timeStamp_s))
 
-			if self.logFile.currPicFileNr <= self.logFile.maxPicFileNr:
-				if self.time_up(timeStamp_s):
-					picName = self.logFile.getNextPic()
-					print('time is up====',str(timeStamp_s),picName)
-					self.log_showPic_signal.emit(picName)
+			picName = self.logFile.getNextPic()
+			print('time is up====',str(timeStamp_s),picName)
+			self.log_showPic_signal.emit(picName)
 
 
 			print("LogFileReadThread is running")
 			self.pause()
-			self.update_progress()
 			self.mutex.unlock()
 
 

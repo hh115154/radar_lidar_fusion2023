@@ -22,6 +22,8 @@ from PyQt5.QtMultimedia import (QCameraInfo,QCameraImageCapture,
 from PyQt5.QtCore import  pyqtSlot,QUrl,QDir, QFileInfo,Qt,QEvent
 from PyQt5.QtMultimedia import QMediaContent,QMediaPlayer
 
+import ConfigConstantData
+
 map_hight_color = {1:(0.,0,1,1),
                    2:(0,1,1,1),
                    3:(0,1,0,1),
@@ -34,15 +36,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.testCntr = 0
 
 
-        self.GLView_OrgRadar.setCameraPosition(elevation=45)
+        self.GLView_OrgRadar.setCameraPosition(elevation=90)
         self.GLView_OrgRadar.setCameraParams(fov=90)
 
-        self.GLView_FuseRadar.setCameraPosition(elevation=70)
+        self.GLView_FuseRadar.setCameraPosition(elevation=90)
         self.GLView_FuseRadar.setCameraParams(fov=90)
 
         self.splitter_vedio_pcl.setFixedSize(100,0)
-
-
 
         self.model = QtGui.QStandardItemModel(15, 15)
         self.model.setVerticalHeaderLabels(['u_ID',
@@ -76,12 +76,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             # self.__iniImageCapture()  # 初始化静态画图
 
         self.set_simulink_logfile_mode()
-        self.timeSlider.sliderReleased.connect(self.do_timeSliderMoved)
 
         ###########old code############
-        self.radar_timer_step = 40
+        self.radar_timer_step = ConfigConstantData.timer_readlogfile_ms
         self.timer_radar = QtCore.QTimer()  # 控制雷达的刷新频率
-        self.timer_radar.timeout.connect(self.get_next_line)
+        self.timer_radar.timeout.connect(self.resume_logThread)
         self.timer_radar.start(self.radar_timer_step)
 
         # self.cameraThread = threadMngt.VideoRecordThread()
@@ -96,9 +95,47 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.timer_online_updatecamera = QtCore.QTimer()
         self.timer_online_updatecamera.timeout.connect(self.update_online_camera)
 
+        self.timeSlider.valueChanged.connect(self.on_timeslider_valueChanged)
+        self.timeSlider.sliderReleased.connect(self.on_timeslider_valueChanged)
+
+        self.total_time_s = 0
 
         self.set_default_mode()
+
         ########new code##############
+    def update_log_progress(self, line_num):
+        self.timeSlider.setValue(line_num)
+        currTime_s =self.total_time_s * self.timeSlider.value()/self.timeSlider.maximum()
+        currTime_str =time.strftime("%H:%M:%S", time.gmtime(currTime_s))
+
+        self.LabRatio.setText(currTime_str)
+
+    def init_timeSlider(self):
+        timeStamp_start = self.readRadarLogFileThread.logFile.getTimeStampByLineNr(0)
+        lastLineNr  = self.readRadarLogFileThread.logFile.log_file_size-1
+        timeStamp_end = self.readRadarLogFileThread.logFile.getTimeStampByLineNr(lastLineNr)
+
+        self.total_time_s = timeStamp_end - timeStamp_start
+
+        totalTime_str =time.strftime("%H:%M:%S", time.gmtime(self.total_time_s))
+
+        self.LabRatio.setText('00:00:00')
+        self.LabTotal.setText('/ '+totalTime_str)
+        self.timeSlider.setMaximum(self.readRadarLogFileThread.logFile.log_file_size)
+        self.timeSlider_oldValue = 0
+
+    def on_timeslider_valueChanged(self):
+        if self.timeSlider.isSliderDown() and not self.isRunning:
+            return  # 如果正在拖动滑条，退出
+        if abs(self.timeSlider.value() - self.timeSlider_oldValue) > 10:
+            print(self.timeSlider.value(),self.timeSlider.maximum(), self.readRadarLogFileThread.logFile.currLineNr)
+            newLogFileLineNr =int(self.readRadarLogFileThread.logFile.log_file_size * self.timeSlider.value()/self.timeSlider.maximum())
+            self.readRadarLogFileThread.logFile.set_Progress(newLogFileLineNr)
+            if not self.isRunning:
+                self.readRadarLogFileThread.resume()
+
+        self.timeSlider_oldValue = self.timeSlider.value()
+
     def set_default_mode(self):
         self.isRunning = False
         self.isOnlineMode = True
@@ -110,32 +147,22 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.timeSlider.setDisabled(True)
         self.cb.setDisabled(False)
 
-
-
     def update_online_camera(self):
         pass
         # show_image = self.cameraThread.showImage
         # self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image))
 
-    def do_timeSliderMoved(self):
-        # self.timeSlider.setSliderPosition()
-        newPos = self.timeSlider.sliderPosition()
-        print(newPos)
-        # self.player.setPosition(newPos)
-        self.do_positionChanged(newPos)
-        # progress = newPos/ self.player.duration()
-        # newLineNr = int(progress * self.readRadarLogFileThread.logFile.log_file_size)
-        # self.read_logFile_from_LineNr(newLineNr)
-
     def read_logFile_from_LineNr(self, lineNr):
         self.readRadarLogFileThread.logFile.currLineNr = lineNr
         self.readRadarLogFileThread.resume()
 
-    def show_radar(self, dict):
+    def show_radar(self, dict, lineNr):
         self.GLView_OrgRadar.removePoints()
         for key in dict.keys():
             self.GLView_OrgRadar.addPoints(pos=dict[key], size=1, color=map_hight_color[key])
         self.GLView_OrgRadar.addPointsDict()
+
+        self.update_log_progress(lineNr)
 
     def show_objectsInfo(self, objList):
         for i in range(len(objList)):
@@ -181,9 +208,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             #     color = QtGui.QColor(255, 0, 0)
             self.GLView_FuseRadar.add3Dbox(pos=objPre[i].posn, size=size, color=objPre[i].color, _id=objPre[i].id,colorType=objPre[i].type)
 
-
-
-
     def tableItem(self, row, col, val):
         item = QtGui.QStandardItem()
         self.model.setItem(row, col, item)
@@ -191,20 +215,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         value = QtCore.QVariant(val)
         self.model.setData(index, value)
 
-    def get_next_line(self):
-        # self.testCntr +=1
-        # if self.testCntr % 200==0:
-        #     rightCameraPos = self.GLView_FuseRadar.cameraPosition()
-        #     rightCameraParam = self.GLView_FuseRadar.cameraParams()
-        #     leftCameraPos = self.GLView_OrgRadar.cameraPosition()
-        #     leftCameraParam = self.GLView_OrgRadar.cameraParams()
-        #     print('right Pos ',rightCameraPos)
-        #     print('right Para ', rightCameraParam)
-        #     print('left Pos ', leftCameraPos)
-        #     print('left Pos ', leftCameraParam)
+    def resume_logThread(self):
         if not self.isOnlineMode and self.isRunning and self.readRadarLogFileThread._isPause:
-            # self.update_radar_progress(self.readRadarLogFileThread.currLineNr)
-            self.readRadarLogFileThread.logFile.next_line()
             self.readRadarLogFileThread.resume()
 
     def get_specific_line(self):
@@ -280,39 +292,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread.logFile.currLineNr -=4
         self.readRadarLogFileThread.resume()
 
-    # def eventFilter(self, watched, event):  ##事件过滤器
-    #     if (watched != self.videoWidget):
-    #         return super().eventFilter(watched, event)
-    #
-    #     # 鼠标左键按下时，暂停或继续播放
-    #     if event.type() == QEvent.MouseButtonPress:
-    #         if event.button() == Qt.LeftButton:
-    #             if self.player.state() == QMediaPlayer.PlayingState:
-    #                 self.player.pause()
-    #             else:
-    #                 self.player.play()
-    #
-    #     # 全屏状态时，按ESC键退出全屏
-    #     if event.type() == QEvent.KeyPress:
-    #         if event.key() == Qt.Key_Escape:
-    #             if self.videoWidget.isFullScreen():
-    #                 self.videoWidget.setFullScreen(False)
-    #
-    #     return super().eventFilter(watched, event)
-
-    def update_radar_progress(self):
-        pass
-        # position =self.player.duration()*self.readRadarLogFileThread.logFile.getPrograss()
-        # self.timeSlider.setSliderPosition(int(position))
-        # self.player.setPosition(int(position))
-
 
 
         ##  ==========由connectSlotsByName()自动连接的槽函数============
 
     @pyqtSlot()  ##打开文件
     def on_btnOpen_clicked(self):
-        ##      curPath=os.getcwd()  #获取系统当前目录
         curPath = QDir.currentPath()  # 获取系统当前目录
         title = "选择视频文件"
         # filt = "视频文件(*.wmv *.avi *.mp4);;所有文件(*.*)"
@@ -320,34 +305,29 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         fileName, flt = QFileDialog.getOpenFileName(self, title, curPath, filt)
         if (fileName == ""):
             return
-
         fileInfo = QFileInfo(fileName)
         baseName = fileInfo.fileName()
         ##      baseName=os.path.basename(fileName)
         self.fileName.setText(baseName)
 
-
         curPath = fileInfo.absolutePath()
         QDir.setCurrent(curPath)  # 重设当前目录
 
-        # media = QMediaContent(QUrl.fromLocalFile(fileName))
-        # self.player.setMedia(media)  # 设置播放文件
-        # self.player.play()
-        # time.sleep(0.2)
         self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(baseName)
         self.readRadarLogFileThread.log_pcl_signal.connect(self.show_radar)  # 仿真文件数据
         self.readRadarLogFileThread.log_obj_signal.connect(self.show_objects)  # 仿真文件数据
         self.readRadarLogFileThread.log_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
         self.readRadarLogFileThread.log_showPic_signal.connect(self.show_one_pic) # 回放一张图片
-
-        self.readRadarLogFileThread.update_progress_signal.connect(self.update_radar_progress)  # 仿真文件数据
         self.readRadarLogFileThread.start()
-        # self.player.pause()
-        self.isRunning = True
 
+
+
+        self.isRunning = True
         self.btnPlay.setDisabled(False)
         self.btnStop.setDisabled(False)
         self.btnPlay.setIcon(self.iconPause)
+
+        self.init_timeSlider()
 
     def show_one_pic(self, picFullPath):
         # print(picFullPath)
@@ -355,9 +335,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         # self.lable_camera.resize(320, 240)
 
         # 加载图片,并自定义图片展示尺寸
-        image = QtGui.QPixmap(picFullPath).scaled(320, 240)
+        image = QtGui.QPixmap(picFullPath).scaled(320, 320)
         # 显示图片
         self.lable_camera.setPixmap(image)
+
 
         # # 通过cv读取图片
         # img = cv2.imread(picFullPath)
@@ -370,7 +351,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         # image = QtGui.QPixmap(image).scaled(640, 480)
         # # 显示图片
         # self.lable_camera.setPixmap(image)
-
 
     @pyqtSlot()  ##播放
     def on_btnPlay_clicked(self):
@@ -397,16 +377,14 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 self.readRadarLogFileThread.pause()
                 self.left_button.setDisabled(False)
                 self.right_button.setDisabled(False)
-                self.btnPlay.setIcon(self.iconPause)
+                self.btnPlay.setIcon(self.iconPlay)
             else:
                 self.readRadarLogFileThread.resume()
                 self.right_button.setDisabled(True)
                 self.left_button.setDisabled(True)
-                self.btnPlay.setIcon(self.iconPlay)
+                self.btnPlay.setIcon(self.iconPause)
 
         self.isRunning = not self.isRunning
-
-
 
     @pyqtSlot()
     def btn_onOff_ckick(self):
@@ -431,55 +409,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 self.cameraThread.pause()
                 self.saveRadarInfo()
 
-    @pyqtSlot()  ##停止
-    def on_btnStop_clicked(self):
-        pass
-        # self.player.stop()
-
-    @pyqtSlot(int)  ##播放进度调节
-    def on_sliderPosition_valueChanged(self, value):
-        pass
-        # # self.player.setPosition(value)
-        # print("state is : ",self.player.PlayingState)
-
-
-    ##  =============自定义槽函数===============================
-
-    # def do_stateChanged(self, state):  ##状态变化
-    #     isPlaying = (state == QMediaPlayer.PlayingState)
-    #
-    #     if isPlaying:
-    #         self.btnPlay.setIcon(self.iconPause)
-    #     else:
-    #         self.btnPlay.setIcon(self.iconPlay)
-    #
-    #     self.btnStop.setEnabled(isPlaying)
-
-    def do_durationChanged(self, duration):  ##文件长度变化
-        self.timeSlider.setMaximum(duration)
-
-        secs = duration / 1000  # 秒
-        mins = secs / 60  # 分钟
-        secs = secs % 60  # 余数秒
-        self.__duration = "%02d:%02d" % (mins, secs)
-        self.LabRatio.setText(self.__curPos + "/" + self.__duration)
-
-
-    def do_positionChanged(self, position):  ##当前播放位置变化
-        if (self.timeSlider.isSliderDown()):
-            return  # 如果正在拖动滑条，退出
-
-        self.timeSlider.setSliderPosition(position)
-        secs = position / 1000  # 秒
-        mins = secs / 60  # 分钟
-        secs = secs % 60  # 余数秒
-        self.__curPos = "%02d:%02d" % (mins, secs)
-        self.LabRatio.setText(self.__curPos + "/" + self.__duration)
 
     def addPoints(self):
         self.GLView_FuseRadar.addPoints(pos=[(5, 5, 1), (3, 4, 1)], size=0.1,
                                       color=(1.0, 0.0, 0.0, 1))  # 当w使用addItem()后，才会生效显示图像
-
 
     def clearPoints(self):
         # md.GLView_FuseRadar.removeItem(md.GLView_FuseRadar.points)  # 当w使用addItem()后，才会生效显示图像

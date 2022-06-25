@@ -23,7 +23,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1160, 613)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("logo.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("./images/logo.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -80,18 +80,6 @@ class Ui_MainWindow(object):
         # self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.tableView.horizontalHeader().setSectionResizeMode( QtWidgets.QHeaderView.Interactive)
 
-        # # 用户可调整，默认值为setDefaultSectionSized的值
-        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
-        # # 用户不可调整，默认值为setDefaultSectionSized的值
-        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        # # 用户不可调整,自动平分适应可用区域
-        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        # # 用户不可调整,自动适应内容的宽度
-        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        # # 用户可调整,默认值为setDefaultSectionSized的值
-        # table_obj.horizontalHeader().setSectionResizeMode(QHeaderView.Custom)
-
-
         self.tableView.verticalHeader().setDefaultSectionSize(38)
         self.splitter_glview_table.addWidget(self.tableView)
 
@@ -108,9 +96,9 @@ class Ui_MainWindow(object):
         self.base_verticalLayout.addWidget(self.splitter_org_obj)
 
         play_area_verticalLayout = QtWidgets.QVBoxLayout()
-        self.timeSlider = QtWidgets.QSlider()
+        self.timeSlider = myControls.JumpSlider()
         self.timeSlider.setTracking(True)
-        # self.timeSlider.setMaximum(99)
+        self.timeSlider.setTickPosition(QtWidgets.QSlider.TicksAbove)
         self.timeSlider.setOrientation(QtCore.Qt.Horizontal)
         self.timeSlider.setObjectName("timeSlider")
 
@@ -169,9 +157,14 @@ class Ui_MainWindow(object):
         btns_area_horizontallayout.addWidget(self.btnStop)
 
         self.LabRatio = QtWidgets.QLabel("进度")
-        self.LabRatio.setMinimumSize(QtCore.QSize(120, 0))
+        self.LabRatio.setMinimumSize(QtCore.QSize(60, 0))
         self.LabRatio.setObjectName("LabRatio")
+
+        self.LabTotal = QtWidgets.QLabel("/")
+        self.LabTotal.setMinimumSize(QtCore.QSize(60, 0))
+        self.LabTotal.setObjectName("LabRatio")
         btns_area_horizontallayout.addWidget(self.LabRatio)
+        btns_area_horizontallayout.addWidget(self.LabTotal)
 
         play_area_verticalLayout.addLayout(btns_area_horizontallayout)
         self.base_verticalLayout.addLayout(play_area_verticalLayout)
