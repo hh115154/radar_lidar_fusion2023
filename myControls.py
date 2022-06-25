@@ -152,14 +152,15 @@ class MyGLViewWidget(gl.GLViewWidget):
         self.rilane = self.paint_lane(ri)
         self.addItem(self.rilane)
 
-    def add3Dbox(self, pos, size, color, _id):
+    def add3Dbox(self, pos, size, color, _id, colorType):
         x,y,z = pos
         box = gl.GLBoxItem(size=size, color=color)
         pos = list(np.sum([pos, (0, self.y_offset, 0)], axis=0))
 
         z =round(z,2)
         dist =round(y,2)
-        objText = str(_id) + ':' + str(z) + ':' + str(dist)
+        strType = presentationLayer.map_color2String[colorType]
+        objText = str(_id) + ':' + str(z) + ':' + str(dist) + ':' + strType
         textItem = gl.GLTextItem(text=objText, color=color)
         textItem.setData(font=QtGui.QFont('Helvetica', 8))
         textItem.translate(*pos)
