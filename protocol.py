@@ -170,6 +170,9 @@ class ARS548_DetectionList:
         print('-----------------detection list print finished!--------------------------')
         return 'finished!'
 
+    def getTimeStamp_s(self):
+      return  self.Timestamp_Seconds + self.Timestamp_Nanoseconds/1000000000
+
 
 # get index of the list max vale
 def getMaxIndex(list):
@@ -371,6 +374,9 @@ class ARS548_ObjectList:
             data_buf = buf2[i * obj_len:(i + 1) * obj_len]
             obj = ARS548_Object(data_buf)
             self.ObjectList_Objects.append(obj)
+
+    def getTimeStamp_s(self):
+      return  self.Timestamp_Seconds + self.Timestamp_Nanoseconds/1000000000
 
     def __repr__(self):
         print('-------------start print obj list-------------------')

@@ -174,9 +174,9 @@ def draw_obj(data_bytes):
 	objNr = obj_list.ObjectList_NumOfObjects
 	for j in range(objNr):
 		objPresentations.append(obj_list.ObjectList_Objects[j].get_object_draw_info())
-	time_s = obj_list.Timestamp_Seconds
-	time_us = obj_list.Timestamp_Nanoseconds
-	return objPresentations , obj_list.ObjectList_Objects,time_s,time_us
+
+	time_stamp_s = obj_list.getTimeStamp_s()
+	return objPresentations , obj_list.ObjectList_Objects, time_stamp_s
 
 def draw_PCL(bytes_data, pcl_color_map):
 	buf = bytes_data[16:35305 + 16]
@@ -185,9 +185,9 @@ def draw_PCL(bytes_data, pcl_color_map):
 	pcl_color_map.clear_dict()
 	for i in range(dList.List_NumOfDetections):
 		pcl_color_map.add_point_to_dict(dList.List_Detections[i].getPosn())
-	time_s = dList.Timestamp_Seconds
-	time_us = dList.Timestamp_Nanoseconds
-	return pcl_color_map, time_s,time_us
+
+	time_stamp_s = dList.getTimeStamp_s()
+	return pcl_color_map, time_stamp_s
 
 
 class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
@@ -329,12 +329,10 @@ class ReadRadarLogFileThread(BaseThread):
 
 		self.logFile = logFileMngt.RadarLogFileInfo(log_file_name)
 		if self.logFile.hasPicFiles:
-			self.log_showPic_signal.emit(self.logFile.logFileFolderPath + '/'
-										 + self.logFile.strNameAffixes + str(self.logFile.currPicFileNr) + '.jpg')
+			self.log_showPic_signal.emit(self.logFile.getCurrPic())
 
-		self.picShowInterval_us = 50 * 1000  # time interval us
+		self.picShowInterval_s = 0.04 # 50ms
 		self.timeStamp_s = 0
-		self.timeStamp_us = 0
 		self.finishDrawObj = False
 		self.finishDrawPCL = False
 		self.objctList = []
@@ -354,19 +352,14 @@ class ReadRadarLogFileThread(BaseThread):
 	def update_progress(self):
 		self.update_progress_signal.emit()
 
-	def time_up(self,timeStamp_s,timeStamp_us):
+	def time_up(self,timeStamp_s):
 		timeUp = False
-		if self.timeStamp_us < timeStamp_us:
-			if timeStamp_us - self.timeStamp_us > self.picShowInterval_us:
-				self.timeStamp_us = timeStamp_us
+		print(self.timeStamp_s,timeStamp_s)
+		if self.timeStamp_s < timeStamp_s:
+			if timeStamp_s - self.timeStamp_s > self.picShowInterval_s:
 				self.timeStamp_s = timeStamp_s
 				timeUp = True
-		else:
-			if self.timeStamp_s < timeStamp_s:
-				if 0xFFFFFFFF - self.timeStamp_us + timeStamp_us > self.picShowInterval_us:
-					self.timeStamp_us = timeStamp_us
-					self.timeStamp_s = timeStamp_s
-					timeUp = True
+
 		return timeUp
 
 	def run(self) -> None:
@@ -375,22 +368,24 @@ class ReadRadarLogFileThread(BaseThread):
 			if self._isPause:
 				self.cond.wait(self.mutex)
 
-			pcl_dataBytes, obj_dataBytes = self.logFile.get_data_bytes()
+			pcl_dataBytes, obj_dataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
 
+			# print(self.logFile.getTimeStampByLineNr(self.logFile.currLineNr))
 			if pcl_dataBytes:
-				pclList,timeStamp_s,timeStamp_us = draw_PCL(pcl_dataBytes, self.presentationPCL)
+				pclList,timeStamp_s = draw_PCL(pcl_dataBytes, self.presentationPCL)
 				self.log_pcl_signal.emit(pclList.dict_hight2color)
+
 			if obj_dataBytes:
-				drawBoxList, objList,timeStamp_s,timeStamp_us = draw_obj(obj_dataBytes)
+				drawBoxList, objList,timeStamp_s = draw_obj(obj_dataBytes)
 				self.log_obj_signal.emit(drawBoxList)
 				self.log_objInfo_signal.emit(objList)
-			print(str(timeStamp_s), ':',str(timeStamp_us))
+			print(str(timeStamp_s))
+
 			if self.logFile.currPicFileNr <= self.logFile.maxPicFileNr:
-				if self.time_up(timeStamp_s,timeStamp_us):
-					print('time is up====',str(timeStamp_s), ':', str(timeStamp_us))
-					self.logFile.currPicFileNr += 1
-					self.log_showPic_signal.emit(self.logFile.logFileFolderPath + '/'
-												 + self.logFile.strNameAffixes + str(self.logFile.currPicFileNr) + '.jpg')
+				if self.time_up(timeStamp_s):
+					picName = self.logFile.getNextPic()
+					print('time is up====',str(timeStamp_s),picName)
+					self.log_showPic_signal.emit(picName)
 
 
 			print("LogFileReadThread is running")
