@@ -1,3 +1,7 @@
+# env: python3.9
+# -*- coding: utf-8 -*-
+__author__ = 'Yang Hongxu'
+# @Time     : 2022/6/25 15:03
 import socket
 from socket import *
 import struct

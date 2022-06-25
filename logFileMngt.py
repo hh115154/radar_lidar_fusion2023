@@ -1,3 +1,7 @@
+# env: python3.9
+# -*- coding: utf-8 -*-
+__author__ = 'Yang Hongxu'
+# @Time     : 2022/6/25 15:03
 from PyQt5 import QtCore
 import os
 
