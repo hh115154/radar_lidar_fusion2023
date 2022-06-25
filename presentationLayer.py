@@ -38,6 +38,18 @@ class ObjectType(Enum):
     Overdrivable = 8
     Underdrivable = 9
 
+map_color2String = {
+    ObjectType.Car : 'Car',
+    ObjectType.Truck : 'Truck',
+    ObjectType.Motorcycle: 'Motorcycle',
+    ObjectType.Bicycle : 'Bicycle',
+    ObjectType.Pedestrian : 'Pedestrian',
+    ObjectType.Animal : 'Animal',
+    ObjectType.Hazard : 'Hazard',
+    ObjectType.Unknown : 'Unknown',
+    ObjectType.Overdrivable : 'Overdrivable',
+    ObjectType.Underdrivable : 'Underdrivable'}
+
 
 class MyColor():
     White = QtGui.QColor(255, 255, 255)
@@ -64,6 +76,9 @@ map_color = {ObjectType.Car: MyColor.Green,
              ObjectType.Unknown: MyColor.Brown,
              ObjectType.Overdrivable: MyColor.Purple,
              ObjectType.Underdrivable: MyColor.Pink}
+
+
+
 map_hight = {ObjectType.Car: 2,
              ObjectType.Truck: 4,
              ObjectType.Motorcycle: 1,

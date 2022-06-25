@@ -27,6 +27,19 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyController, self).__init__()
         self.setupUi(self)
+        self.testCntr = 0
+
+
+        self.GLView_OrgRadar.setCameraPosition(elevation=45)
+        self.GLView_OrgRadar.setCameraParams(fov=90)
+
+        self.GLView_FuseRadar.setCameraPosition(elevation=70)
+        self.GLView_FuseRadar.setCameraParams(fov=90)
+
+        self.splitter_vedio_pcl.setFixedSize(0,0)
+        # self.splitter_org_obj.setStretchFactor(200,0)
+        # self.splitter_glview_table.setStretchFactor(100,200)
+
 
         self.model = QtGui.QStandardItemModel(15, 15)
         self.model.setVerticalHeaderLabels(['u_ID',
@@ -46,24 +59,24 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                                             'u_Shape_Width_Edge_Mean'])
         self.tableView.setModel(self.model)
 
-        self.player = QMediaPlayer(self)  # 创建视频播放器
 
         self.radar_timer_step = 30
 
-        self.player.setPlaybackRate(0.01)
-        self.player.setNotifyInterval(1)  # 信息更新周期, ms
 
-        self.player.setVideoOutput(self.videoWidget)  # 视频显示组件
 
         # self.videoWidget.installEventFilter(self)  # 事件过滤器
 
+
+
         self.__duration = ""
         self.__curPos = ""
-
-        # self.player.stateChanged.connect(self.do_stateChanged)
-
+        self.player = QMediaPlayer(self)  # 创建视频播放器
+        self.player.setPlaybackRate(0.01)
+        self.player.setNotifyInterval(1)  # 信息更新周期, ms
+        self.player.setVideoOutput(self.videoWidget)  # 视频显示组件
         self.player.positionChanged.connect(self.do_positionChanged)
         self.player.durationChanged.connect(self.do_durationChanged)
+        # self.player.stateChanged.connect(self.do_stateChanged)
 
         # 快进
         self.right_button.clicked.connect(self.up_time)
@@ -124,6 +137,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def do_timeSliderMoved(self):
         # self.timeSlider.setSliderPosition()
         newPos = self.timeSlider.sliderPosition()
+        print(newPos)
         self.player.setPosition(newPos)
         self.do_positionChanged(newPos)
         progress = newPos/ self.player.duration()
@@ -182,21 +196,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             #     color = QtGui.QColor(0, 255, 0)
             # else:
             #     color = QtGui.QColor(255, 0, 0)
-            self.GLView_FuseRadar.add3Dbox(pos=objPre[i].posn, size=size, color=objPre[i].color, _id=objPre[i].id)
+            self.GLView_FuseRadar.add3Dbox(pos=objPre[i].posn, size=size, color=objPre[i].color, _id=objPre[i].id,colorType=objPre[i].type)
 
-            # col = 0
-            # self.tableItem(i, col, objPre[i].id)
-            # col += 1  # 1
-            # self.tableItem(i, col, objPre[i].type.name)
-            # col += 1  # 2
-            # x, y, z = objPre[i].posn
-            # self.tableItem(i, col, x)
-            # col += 1  # 3
-            # self.tableItem(i, col, z)
-            # col += 1  # 4
-            # self.tableItem(i, col, objPre[i].stMovement)
-            # col += 1  # 5
-            # self.tableItem(i, col, objPre[i].absV_x)
 
 
 
@@ -208,6 +209,16 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.model.setData(index, value)
 
     def get_next_line(self):
+        # self.testCntr +=1
+        # if self.testCntr % 200==0:
+        #     rightCameraPos = self.GLView_FuseRadar.cameraPosition()
+        #     rightCameraParam = self.GLView_FuseRadar.cameraParams()
+        #     leftCameraPos = self.GLView_OrgRadar.cameraPosition()
+        #     leftCameraParam = self.GLView_OrgRadar.cameraParams()
+        #     print('right Pos ',rightCameraPos)
+        #     print('right Para ', rightCameraParam)
+        #     print('left Pos ', leftCameraPos)
+        #     print('left Pos ', leftCameraParam)
         if not self.isOnlineMode and self.isRunning and self.readRadarLogFileThread._isPause:
             # self.update_radar_progress(self.readRadarLogFileThread.currLineNr)
             self.readRadarLogFileThread.logFile.next_line()
@@ -274,15 +285,15 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     # 快进
     def up_time(self):
-        # self.readRadarLogFileThread.logFile.next_line()
+        self.readRadarLogFileThread.logFile.next_line()
         self.readRadarLogFileThread.resume()
-        # num = self.player.position() + int(self.player.duration() / self.player_ms_step)
-        # self.player.setPosition(num)
-        # self.readRadarLogFileThread.resume()
+        num = self.player.position() + int(self.player.duration() / self.player_ms_step)
+        self.player.setPosition(num)
+        self.readRadarLogFileThread.resume()
 
     def down_time(self):
-        # num = self.player.position() - int(self.player.duration() / self.player_ms_step)
-        # self.player.setPosition(num)
+        num = self.player.position() - int(self.player.duration() / self.player_ms_step)
+        self.player.setPosition(num)
         self.readRadarLogFileThread.logFile.currLineNr -=4
         self.readRadarLogFileThread.resume()
 
@@ -335,9 +346,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         curPath = fileInfo.absolutePath()
         QDir.setCurrent(curPath)  # 重设当前目录
 
-        media = QMediaContent(QUrl.fromLocalFile(fileName))
-        self.player.setMedia(media)  # 设置播放文件
-        self.player.play()
+        # media = QMediaContent(QUrl.fromLocalFile(fileName))
+        # self.player.setMedia(media)  # 设置播放文件
+        # self.player.play()
         # time.sleep(0.2)
         self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(baseName)
         self.readRadarLogFileThread.log_pcl_signal.connect(self.show_radar)  # 仿真文件数据
@@ -355,12 +366,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.btnPlay.setIcon(self.iconPause)
 
     def show_one_pic(self, picFullPath):
-        print(picFullPath)
+        # print(picFullPath)
 
-        self.lable_camera.resize(640, 480)
+        # self.lable_camera.resize(320, 240)
 
         # 加载图片,并自定义图片展示尺寸
-        image = QtGui.QPixmap(picFullPath).scaled(640, 480)
+        image = QtGui.QPixmap(picFullPath).scaled(320, 240)
         # 显示图片
         self.lable_camera.setPixmap(image)
 
@@ -472,7 +483,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if (self.timeSlider.isSliderDown()):
             return  # 如果正在拖动滑条，退出
 
-        # self.timeSlider.setSliderPosition(position)
+        self.timeSlider.setSliderPosition(position)
         secs = position / 1000  # 秒
         mins = secs / 60  # 分钟
         secs = secs % 60  # 余数秒
