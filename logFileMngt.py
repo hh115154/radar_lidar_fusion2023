@@ -38,6 +38,9 @@ class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
         self.log_file_size = len(self.fileLines)
         self.currLineNr = 0
 
+    def is_end(self):
+        return self.currLineNr >= self.log_file_size
+
     def getTimeStampByLineNr(self,lineNr):
         timestamp_s = 0
         data = 0
@@ -60,13 +63,16 @@ class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
 
     def getNextPic(self):
         self.currPicFileNr += 1
+        self.currLineNr %= self.maxPicFileNr
         return self.getCurrPic()
 
     def sortPicFileNameAsNum(self, picFileList):
         numLenMap = {1: [], 2: [], 3: [], 4: [], 5: []}
         for picFile in picFileList:
-            numLenMap[len(self.getPicNameNrStr(picFile))].append(picFile)
-
+            try:
+                numLenMap[len(self.getPicNameNrStr(picFile))].append(picFile)
+            except:
+                print('请不要修改原始log文件夹，或增加内容')
         for i in range(len(numLenMap)):
             if numLenMap[i+1]:
                 self.sortedPicFileList.extend(numLenMap[i+1])
@@ -88,17 +94,27 @@ class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
     def get_current_line(self):
         if self.currLineNr < self.log_file_size:
             return self.fileLines[self.currLineNr]
+        else:
+            return self.fileLines[-1]
 
     def get_fileLine_by_LineNr(self,lineNr):
-        if lineNr >= 0 and lineNr <= self.log_file_size - 1:
-            return self.fileLines[lineNr]
+        return self.fileLines[lineNr]
+
+    def goback_oneStep(self):
+        if self.currLineNr >= 4:
+            self.currLineNr -= 4
+        else:
+            self.currLineNr = 0
 
     def next_line(self):
-        if self.currLineNr < self.log_file_size:
-            self.currLineNr += 1
+        self.currLineNr += 1
+        self.currLineNr %= self.log_file_size
 
     def get_data_bytes(self, lineNr):
-        bytes_data = bytes.fromhex(self.get_fileLine_by_LineNr(lineNr))
+        try:
+            bytes_data = bytes.fromhex(self.get_fileLine_by_LineNr(lineNr))
+        except Exception as e:
+            print(e)
         return bytes_data
 
     def set_Progress(self, lineNr):

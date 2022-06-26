@@ -172,7 +172,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 
 
 class ReadRadarLogFileThread(BaseThread):
-	log_pcl_signal = pyqtSignal(dict,int)
+	log_pcl_signal = pyqtSignal(dict)
 	log_obj_signal = pyqtSignal(list)
 	log_objInfo_signal = pyqtSignal(list)
 	log_showPic_signal = pyqtSignal(str)
@@ -184,6 +184,8 @@ class ReadRadarLogFileThread(BaseThread):
 			print('select a hex file, please!')
 			return
 
+
+
 		self.logFile = logFileMngt.RadarLogFileInfo(log_file_name)
 		if self.logFile.hasPicFiles:
 			self.log_showPic_signal.emit(self.logFile.getCurrPic())
@@ -194,12 +196,24 @@ class ReadRadarLogFileThread(BaseThread):
 		self.finishDrawPCL = False
 		self.objctList = []
 		self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
+		while len(self.currLineDataBytes) != ConfigConstantData.ObjListByteNr:
+			self.logFile.next_line()
+			self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)# 第一行需要是objects
+		self.testfilename = 'test.txt'
 
 	def run(self) -> None:
 		while True:
 			self.mutex.lock()
 			if self._isPause:
 				self.cond.wait(self.mutex)
+			# with open(self.testfilename, 'w') as f:
+			# 	strLine = self.logFile.get_fileLine_by_LineNr(self.logFile.currLineNr)
+			# 	f.write(strLine)
+			# pictures
+			# picName = self.logFile.getNextPic()
+			# print('showing pic of', picName)
+			# self.log_showPic_signal.emit(picName)
+
 
 			# obj
 			while len(self.currLineDataBytes) == ConfigConstantData.ObjListByteNr:
@@ -207,8 +221,11 @@ class ReadRadarLogFileThread(BaseThread):
 				presentationObj = objList.getPresentationInfo()
 				self.logFile.next_line()
 				self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
-			self.log_obj_signal.emit(presentationObj)
-			self.log_objInfo_signal.emit(objList.ObjectList_Objects)
+			try:
+				self.log_obj_signal.emit(presentationObj)
+				self.log_objInfo_signal.emit(objList.ObjectList_Objects)
+			except Exception as e:
+				print(e)
 
 			# pcl
 			while len(self.currLineDataBytes) == ConfigConstantData.PclByteNr:
@@ -217,12 +234,8 @@ class ReadRadarLogFileThread(BaseThread):
 				presentationPCL = plcList.getPresentationPcl()
 				self.logFile.next_line()
 				self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
-			self.log_pcl_signal.emit(presentationPCL.dict_hight2color, self.logFile.currLineNr-1)
+			self.log_pcl_signal.emit(presentationPCL.dict_hight2color)
 
-			# pictures
-			picName = self.logFile.getNextPic()
-			print('showing pic of', picName, 'at time of ',str(timeStamp_s))
-			self.log_showPic_signal.emit(picName)
 
 			self.pause()
 			self.mutex.unlock()

@@ -102,9 +102,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         self.set_default_mode()
 
+        self.readRadarLogFileThread = 0
+
         ########new code##############
-    def update_log_progress(self, line_num):
-        self.timeSlider.setValue(line_num)
+    def update_log_progress(self):
+        self.timeSlider.setValue(self.readRadarLogFileThread.logFile.currLineNr)
         currTime_s =self.total_time_s * self.timeSlider.value()/self.timeSlider.maximum()
         currTime_str =time.strftime("%H:%M:%S", time.gmtime(currTime_s))
 
@@ -128,7 +130,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if self.timeSlider.isSliderDown() and not self.isRunning:
             return  # 如果正在拖动滑条，退出
         if abs(self.timeSlider.value() - self.timeSlider_oldValue) > 10:
-            print(self.timeSlider.value(),self.timeSlider.maximum(), self.readRadarLogFileThread.logFile.currLineNr)
             newLogFileLineNr =int(self.readRadarLogFileThread.logFile.log_file_size * self.timeSlider.value()/self.timeSlider.maximum())
             self.readRadarLogFileThread.logFile.set_Progress(newLogFileLineNr)
             if not self.isRunning:
@@ -152,17 +153,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         # show_image = self.cameraThread.showImage
         # self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image))
 
-    def read_logFile_from_LineNr(self, lineNr):
-        self.readRadarLogFileThread.logFile.currLineNr = lineNr
-        self.readRadarLogFileThread.resume()
-
-    def show_radar(self, dict, lineNr):
+    def show_radar(self, dict):
         self.GLView_OrgRadar.removePoints()
         for key in dict.keys():
             self.GLView_OrgRadar.addPoints(pos=dict[key], size=1, color=map_hight_color[key])
         self.GLView_OrgRadar.addPointsDict()
 
-        self.update_log_progress(lineNr)
+        self.update_log_progress()
 
     def show_objectsInfo(self, objList):
         for i in range(len(objList)):
@@ -216,7 +213,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.model.setData(index, value)
 
     def resume_logThread(self):
-        if not self.isOnlineMode and self.isRunning and self.readRadarLogFileThread._isPause:
+        if not self.isOnlineMode and self.isRunning:
+            picName = self.readRadarLogFileThread.logFile.getNextPic()
+            self.show_one_pic(picName)
             self.readRadarLogFileThread.resume()
 
     def get_specific_line(self):
@@ -283,7 +282,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread.resume()
 
     def down_time(self):
-        lineNr =  self.readRadarLogFileThread.logFile.currLineNr -4
+        lineNr =  self.readRadarLogFileThread.logFile.goback_oneStep()
         self.readRadarLogFileThread.logFile.set_Progress(lineNr)
         self.readRadarLogFileThread.resume()
 
@@ -296,6 +295,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         fileName, flt = QFileDialog.getOpenFileName(self, title, curPath, filt)
         if (fileName == ""):
             return
+        if self.readRadarLogFileThread:
+            self.readRadarLogFileThread.terminate()
+            self.readRadarLogFileThread = None
+
+
         fileInfo = QFileInfo(fileName)
         baseName = fileInfo.fileName()
         ##      baseName=os.path.basename(fileName)
@@ -304,7 +308,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         curPath = fileInfo.absolutePath()
         QDir.setCurrent(curPath)  # 重设当前目录
 
-        self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(baseName)
+        self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(fileName)
         self.readRadarLogFileThread.log_pcl_signal.connect(self.show_radar)  # 仿真文件数据
         self.readRadarLogFileThread.log_obj_signal.connect(self.show_objects)  # 仿真文件数据
         self.readRadarLogFileThread.log_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
@@ -316,6 +320,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.isRunning = True
         self.btnPlay.setDisabled(False)
         self.btnStop.setDisabled(False)
+        self.btnOpen.setDisabled(True)
         self.btnPlay.setIcon(self.iconPause)
 
         self.init_timeSlider()
@@ -368,11 +373,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 self.readRadarLogFileThread.pause()
                 self.left_button.setDisabled(False)
                 self.right_button.setDisabled(False)
+                self.btnOpen.setDisabled(False)
                 self.btnPlay.setIcon(self.iconPlay)
             else:
                 self.readRadarLogFileThread.resume()
                 self.right_button.setDisabled(True)
                 self.left_button.setDisabled(True)
+                self.btnOpen.setDisabled(True)
                 self.btnPlay.setIcon(self.iconPause)
 
         self.isRunning = not self.isRunning

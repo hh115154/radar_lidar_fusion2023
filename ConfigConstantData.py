@@ -10,5 +10,5 @@ ObjListByteNr = 9401
 PclByteNr = 35336
 
 #time
-timer_readlogfile_ms = 40# 實際應該是50
+timer_readlogfile_ms = 50# 實際應該是50
 
