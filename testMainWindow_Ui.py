@@ -35,10 +35,10 @@ class Ui_MainWindow(object):
 
         #left.top
         # self.swt_camera_stacklayout = QtWidgets.QStackedLayout()
-        self.swt_camera_stackWidget= QtWidgets.QStackedWidget()
-
-        self.videoWidget = QVideoWidget()
-        self.videoWidget.setObjectName("videoWidget")
+        # self.swt_camera_stackWidget= QtWidgets.QStackedWidget()
+        #
+        # self.videoWidget = QVideoWidget()
+        # self.videoWidget.setObjectName("videoWidget")
 
         #
         # self.viewFinder = QCameraViewfinder()
@@ -50,12 +50,12 @@ class Ui_MainWindow(object):
         self.lable_camera.setObjectName("lable_camera")
         self.lable_camera.setScaledContents(True)
 
-        self.swt_camera_stackWidget.addWidget(self.lable_camera)
-        self.swt_camera_stackWidget.addWidget(self.videoWidget)
+        # self.swt_camera_stackWidget.addWidget(self.lable_camera)
+        # self.swt_camera_stackWidget.addWidget(self.videoWidget)
 
         # self.lable_camera.setDisabled(True)
         # self.videoWidget.setDisabled(True)
-        self.splitter_vedio_pcl.addWidget(self.swt_camera_stackWidget)
+        self.splitter_vedio_pcl.addWidget(self.lable_camera)
 
         # splitter_vedio_pcl.addWidget(self.swt_camera_stacklayout)
 

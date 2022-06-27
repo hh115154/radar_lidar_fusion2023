@@ -118,6 +118,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		self.timestamp = time.time()
 		self.presentationPCL = presentationLayer.Pcl_Color()
 		self.counter = 0
+		self.radarLogFile = 0
 
 	def draw_obj(self,data_bytes):
 		self.counter +=1
