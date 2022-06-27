@@ -43,7 +43,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.GLView_FuseRadar.setCameraPosition(elevation=90)
         self.GLView_FuseRadar.setCameraParams(fov=90)
 
-        self.splitter_vedio_pcl.setFixedSize(100,0)
+        # self.splitter_vedio_pcl.setFixedSize(200,0)
+
 
         self.model = QtGui.QStandardItemModel(15, 15)
         self.model.setVerticalHeaderLabels(['u_ID',
@@ -227,7 +228,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if r:
             show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
             show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
-            self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image))
+            self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(320, 240, QtCore.Qt.KeepAspectRatio))
         return f
 
     def set_runtime_mode(self):
@@ -306,7 +307,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     def show_one_pic(self, picFullPath):
         # image = QtGui.QPixmap(picFullPath).scaled(320, 320)
-        image = QtGui.QPixmap(picFullPath)
+        image = QtGui.QPixmap(picFullPath).scaled(320, 240)
         # 显示图片
         self.lable_camera.setPixmap(image)
 

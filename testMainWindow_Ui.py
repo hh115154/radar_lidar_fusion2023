@@ -48,6 +48,7 @@ class Ui_MainWindow(object):
 
         self.lable_camera = QtWidgets.QLabel() # 显示离线图片
         self.lable_camera.setObjectName("lable_camera")
+        # self.lable_camera.setFixedSize(QtCore.QSize(320, 240))
         self.lable_camera.setScaledContents(True)
 
         # self.swt_camera_stackWidget.addWidget(self.lable_camera)
