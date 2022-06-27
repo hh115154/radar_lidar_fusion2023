@@ -210,10 +210,6 @@ class ReadRadarLogFileThread(BaseThread):
 			# with open(self.testfilename, 'w') as f:
 			# 	strLine = self.logFile.get_fileLine_by_LineNr(self.logFile.currLineNr)
 			# 	f.write(strLine)
-			# pictures
-			# picName = self.logFile.getNextPic()
-			# print('showing pic of', picName)
-			# self.log_showPic_signal.emit(picName)
 
 
 			# obj
@@ -236,6 +232,12 @@ class ReadRadarLogFileThread(BaseThread):
 				self.logFile.next_line()
 				self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
 			self.log_pcl_signal.emit(presentationPCL.dict_hight2color)
+
+
+			# pictures
+			picName = self.logFile.getNextPic()
+			# print('showing pic of', picName)
+			self.log_showPic_signal.emit(picName)
 
 
 			self.pause()

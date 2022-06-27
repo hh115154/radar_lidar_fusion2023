@@ -63,7 +63,8 @@ class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
 
     def getNextPic(self):
         self.currPicFileNr += 1
-        self.currLineNr %= self.maxPicFileNr
+        if self.currPicFileNr >= self.maxPicFileNr:
+            self.currPicFileNr = self.firstPicFileNr
         return self.getCurrPic()
 
     def sortPicFileNameAsNum(self, picFileList):
@@ -119,7 +120,11 @@ class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
 
     def set_Progress(self, lineNr):
         self.currLineNr = lineNr
-        self.currPicFileNr = self.firstPicFileNr + int(self.maxPicFileNr * self.currLineNr/self.log_file_size)
+        self.setPicFileNrByLogLineNr(lineNr)
+
+
+    def setPicFileNrByLogLineNr(self,lineNr):
+        self.currPicFileNr = self.firstPicFileNr + int((self.maxPicFileNr-self.firstPicFileNr) * lineNr/self.log_file_size)
 
     def parse_obj_list(self,data_bytes):
         obj_buf = data_bytes[16:9385 + 16]

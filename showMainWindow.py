@@ -86,17 +86,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.timer_radar.timeout.connect(self.resume_logThread)
         self.timer_radar.start(self.radar_timer_step)
 
-        # self.cameraThread = threadMngt.VideoRecordThread()
-        # self.cameraThread.start()
-        # self.cameraThread.pause()
         self.orgRadarThread = threadMngt.OriginalRadarThread()
         self.orgRadarThread.orgRadar_pcl_signal.connect(self.show_pcl)  # 仿真文件数据
         self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
         self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo) # 表格控件
         self.orgRadarThread.start()
-
-        self.timer_online_updatecamera = QtCore.QTimer()
-        self.timer_online_updatecamera.timeout.connect(self.update_online_camera)
 
         self.timeSlider.valueChanged.connect(self.on_timeslider_valueChanged)
         self.timeSlider.sliderReleased.connect(self.on_timeslider_valueChanged)
@@ -130,18 +124,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.timeSlider_oldValue = 0
 
     def on_timeslider_valueChanged(self):
-        # if self.timeSlider.isSliderDown() and not self.isRunning:
-        #     return  # 如果正在拖动滑条，退出
         if abs(self.timeSlider.value() - self.timeSlider_oldValue) > 10:
             newLogFileLineNr =int(self.readRadarLogFileThread.logFile.log_file_size * self.timeSlider.value()/self.timeSlider.maximum())
             self.readRadarLogFileThread.logFile.set_Progress(newLogFileLineNr)
 
-            picName = self.readRadarLogFileThread.logFile.getCurrPic()
-            self.show_one_pic(picName)
-            self.update_log_progress()
             if not self.isRunning:
                 self.readRadarLogFileThread.resume()
-
 
         self.timeSlider_oldValue = self.timeSlider.value()
 
@@ -156,18 +144,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.timeSlider.setDisabled(True)
         self.cb.setDisabled(False)
 
-    def update_online_camera(self):
-        pass
-        # show_image = self.cameraThread.showImage
-        # self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image))
-
     def show_pcl(self, dict):
         self.GLView_OrgRadar.removePoints()
         for key in dict.keys():
             self.GLView_OrgRadar.addPoints(pos=dict[key], size=1, color=map_hight_color[key])
         self.GLView_OrgRadar.addPointsDict()
-
-        self.update_log_progress()
 
     def show_objectsInfo(self, objList):
         for i in range(len(objList)):
@@ -202,7 +183,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             row += 1
             self.tableItem(row, i, objList[i].u_Shape_Width_Edge_Mean)
 
-
     def show_objects(self, objPre):
         self.GLView_FuseRadar.clear3Dbox()
         for i in range(len(objPre)):
@@ -222,8 +202,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     def resume_logThread(self):
         if not self.isOnlineMode and self.isRunning:
-            picName = self.readRadarLogFileThread.logFile.getNextPic()
-            self.show_one_pic(picName)
+            self.update_log_progress()
             self.readRadarLogFileThread.resume()
 
         if self.isOnlineMode:
@@ -243,7 +222,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         res = cv2.resize(f, (320, 240), interpolation=cv2.INTER_CUBIC)
         cv2.imwrite(picName, res)
 
-
     def showCamera(self):
         r, f = self.camera.read()
         if r:
@@ -252,26 +230,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image))
         return f
 
-    # def get_specific_line(self):
-    #     if not self.isOnlineMode and self.isRunning:
-    #         self.readRadarLogFileThread.pause()
-
-    # def __iniCamera(self):
-    #     camInfo = QCameraInfo.defaultCamera()  # 获取缺省摄像头,QCameraInfo
-    #
-    #     self.camera = QCamera(camInfo)  # 创建摄像头对象
-    #     self.camera.setViewfinder(self.viewFinder)  # 设置取景框预览
-    #
-    #     self.camera.setCaptureMode(QCamera.CaptureVideo)
-
-
     def set_runtime_mode(self):
-        # self.videoWidget.setHidden(True)
-        # self.videoWidget.setDisabled(True)
-        # self.viewFinder.setHidden(False)
-        # self.viewFinder.setDisabled(False)
-        # self.lable_camera.setHidden(False)
-        # self.lable_camera.setDisabled(False)
 
         self.btnOpen.setDisabled(True)
         self.left_button.setDisabled(True)
@@ -284,25 +243,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         self.isOnlineMode = True
 
-
     def set_simulink_logfile_mode(self):
-        # self.viewFinder.setHidden(True)
-        # self.viewFinder.setDisabled(True)
-        # self.lable_camera.setHidden(True)
-        # self.lable_camera.setDisabled(True)
-        # self.videoWidget.setHidden(False)
-        # self.videoWidget.setDisabled(False)
         self.btnPlay.setDisabled(True)
-        # self.left_button.setDisabled(False)
-        # self.right_button.setDisabled(False)
         self.timeSlider.setDisabled(False)
         self.btnOpen.setDisabled(False)
-        # self.btnPlay.setDisabled(False)
-        # self.btnStop
-
-        # self.camera.stop()
         self.isOnlineMode = False
-
 
     def RunModeChange(self, index):
         if index == 0:  # log文件读取
@@ -316,8 +261,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread.resume()
 
     def down_time(self):
-        lineNr =  self.readRadarLogFileThread.logFile.goback_oneStep()
-        self.readRadarLogFileThread.logFile.set_Progress(lineNr)
+        self.readRadarLogFileThread.logFile.goback_oneStep()
+        self.readRadarLogFileThread.logFile.set_Progress(self.readRadarLogFileThread.logFile.currLineNr)
         self.readRadarLogFileThread.resume()
 
     @pyqtSlot()  ##打开文件
@@ -360,10 +305,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.init_timeSlider()
 
     def show_one_pic(self, picFullPath):
-        print(picFullPath)
-        # self.lable_camera.resize(320, 240)
-
-        # 加载图片,并自定义图片展示尺寸
         # image = QtGui.QPixmap(picFullPath).scaled(320, 320)
         image = QtGui.QPixmap(picFullPath)
         # 显示图片
@@ -376,7 +317,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         os.makedirs(self.log_folder_path)
         self.orgRadarThread.radarLogFile = open(self.log_folder_path + "/" + ConfigConstantData.radar_log_file_name, 'a')
 
-
     @pyqtSlot()  ##播放
     def on_btnPlay_clicked(self):
         if self.isOnlineMode:  # 实时数据采集
@@ -384,9 +324,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 self.orgRadarThread.pause()
                 self.btnPlay.setIcon(self.iconPlay)
             else:  # 如果没有运行，则开始记录
-                # if self.cameraThread.videoWriter is None:
-                #     self.cameraThread.updateVideoWriter()
-                # self.cameraThread.resume()
                 self.creat_new_log_folde()
                 self.orgRadarThread.resume()
                 self.btnPlay.setIcon(self.iconPause)
@@ -430,19 +367,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 self.cameraThread.pause()
                 self.saveRadarInfo()
 
-
     def addPoints(self):
         self.GLView_FuseRadar.addPoints(pos=[(5, 5, 1), (3, 4, 1)], size=0.1,
                                       color=(1.0, 0.0, 0.0, 1))  # 当w使用addItem()后，才会生效显示图像
 
     def clearPoints(self):
-        # md.GLView_FuseRadar.removeItem(md.GLView_FuseRadar.points)  # 当w使用addItem()后，才会生效显示图像
         md.GLView_FuseRadar.removePoints()
-
-    def slot_print(self, value):
-        print(value)
-        # pos = self.GLView_FuseRadar.cameraPosition()
-        # print(pos)
 
 
 if __name__ == "__main__":
