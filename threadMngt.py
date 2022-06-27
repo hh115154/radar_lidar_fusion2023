@@ -146,6 +146,10 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 			print("OriginalRadarThread is running")
 			try:
 				recv_message, client = self.adapter_socket.udp_socket.recvfrom(self.adapter_socket.rcvBufLen)
+				#test write log
+				recv_message = recv_message.decode("utf-8")
+				self.radarLogFile.write(recv_message)
+
 				# if 50 == len(recv_message):
 				# 	data = struct.unpack('>50B', recv_message)
 				# 	print("data len 50",data)
@@ -200,17 +204,13 @@ class ReadRadarLogFileThread(BaseThread):
 		while len(self.currLineDataBytes) != ConfigConstantData.ObjListByteNr:
 			self.logFile.next_line()
 			self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)# 第一行需要是objects
-		self.testfilename = 'test.txt'
+
 
 	def run(self) -> None:
 		while True:
 			self.mutex.lock()
 			if self._isPause:
 				self.cond.wait(self.mutex)
-			# with open(self.testfilename, 'w') as f:
-			# 	strLine = self.logFile.get_fileLine_by_LineNr(self.logFile.currLineNr)
-			# 	f.write(strLine)
-
 
 			# obj
 			while len(self.currLineDataBytes) == ConfigConstantData.ObjListByteNr:

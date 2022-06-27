@@ -100,8 +100,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         self.set_default_mode()
 
-        self.readRadarLogFileThread = 0
-
+        self.readRadarLogFileThread = None
         ########new code##############
     def update_log_progress(self):
         self.timeSlider.setValue(self.readRadarLogFileThread.logFile.currLineNr)
@@ -313,10 +312,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     def creat_new_log_folde(self):
         curPath = QDir.currentPath()  # 获取系统当前目录
-        self.log_folder_path = curPath + ConfigConstantData.picture_saved_path +\
-                               ConfigConstantData.picture_saved_name + self.getCurrTimeStr()
+        sharedName = ConfigConstantData.logFile_head_affix + self.getCurrTimeStr()
+        self.log_folder_path = curPath + ConfigConstantData.picture_saved_path + sharedName
         os.makedirs(self.log_folder_path)
-        self.orgRadarThread.radarLogFile = open(self.log_folder_path + "/" + ConfigConstantData.radar_log_file_name, 'a')
+        self.orgRadarThread.radarLogFile = open(self.log_folder_path + "/" +sharedName+ ConfigConstantData.logfile_tail_affix, 'a')
 
     @pyqtSlot()  ##播放
     def on_btnPlay_clicked(self):
@@ -324,6 +323,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             if self.isRunning:  # 如果正在运行，则暂停，并保存文件
                 self.orgRadarThread.pause()
                 self.btnPlay.setIcon(self.iconPlay)
+                self.orgRadarThread.radarLogFile.close()
             else:  # 如果没有运行，则开始记录
                 self.creat_new_log_folde()
                 self.orgRadarThread.resume()

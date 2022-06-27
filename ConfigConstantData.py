@@ -14,6 +14,6 @@ timer_readlogfile_ms = 50# 實際應該是50
 
 # log file and pic file
 picture_saved_path = '/myLogFolder/'
-picture_saved_name = 'Record_'
-logfile_affiex = '.someip.ars540.hex'
+logFile_head_affix = 'Record_'
+logfile_tail_affix = '.someip.ars540.hex'
 
