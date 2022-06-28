@@ -49,6 +49,12 @@ class fileClass(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    byte_data = "\xff\xfeM\x00a\x00r\x00c\x00h\x00".encode("utf-16")
+    print("byte converted to hexadecimal value:", byte_data.hex(' '))
+
+
+
     mw = fileClass()
     mw.show()
     sys.exit(app.exec_())

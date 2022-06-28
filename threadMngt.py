@@ -147,9 +147,6 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 			try:
 				recv_message, client = self.adapter_socket.udp_socket.recvfrom(self.adapter_socket.rcvBufLen)
 				#test write log
-				recv_message = recv_message.decode("utf-8")
-				self.radarLogFile.write(recv_message)
-
 				# if 50 == len(recv_message):
 				# 	data = struct.unpack('>50B', recv_message)
 				# 	print("data len 50",data)
@@ -160,15 +157,21 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 				# 	data = struct.unpack('>803B', recv_message)
 				# 	print("data len 803",data)
 				if ConfigConstantData.ObjListByteNr == len(recv_message): # objects
+					strData = recv_message.hex(' ') +'\n'
+					self.radarLogFile.write(strData)
+
 					data = struct.unpack('>9401B', recv_message)
 					bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.ObjListByteNr, byteorder='big')
 					self.draw_obj(bytes_data)
-					# print("data len 9401", data)
+
 				elif ConfigConstantData.PclByteNr == len(recv_message): # pcl
+					strData = recv_message.hex(' ') +'\n'
+					self.radarLogFile.write(strData)
+
 					data = struct.unpack('>35336B', recv_message)
 					bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.PclByteNr, byteorder='big')
 					self.draw_PCL(bytes_data)
-					# print("data len 35336", data)
+
 
 			except Exception as e:
 				print(e)

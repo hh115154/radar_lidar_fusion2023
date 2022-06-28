@@ -190,7 +190,10 @@ class MyGLViewWidget(gl.GLViewWidget):
 
     def addPointsDict(self):
         for point in self.points:
-            self.addItem(point)
+            try:
+                self.addItem(point)
+            except:
+                pass
 
     def addPoints(self, pos, size, color):
         offset_pos = []

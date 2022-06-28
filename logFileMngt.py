@@ -137,4 +137,9 @@ class RadarLogFileInfo(): # 区分视频文件还是雷达log文件
         return dList
 
 
+    def getLogFileLineFromOrgData(self,orgData):
+        strData = orgData.hex(' ')
+        strData +='\n'
+        return strData
+
 

@@ -311,9 +311,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.lable_camera.setPixmap(image)
 
     def creat_new_log_folde(self):
-        curPath = QDir.currentPath()  # 获取系统当前目录
+        curPath = os.path.dirname(__file__)  # 获取系统当前目录
         sharedName = ConfigConstantData.logFile_head_affix + self.getCurrTimeStr()
         self.log_folder_path = curPath + ConfigConstantData.picture_saved_path + sharedName
+        print('log folder path:', self.log_folder_path)
         os.makedirs(self.log_folder_path)
         self.orgRadarThread.radarLogFile = open(self.log_folder_path + "/" +sharedName+ ConfigConstantData.logfile_tail_affix, 'a')
 
