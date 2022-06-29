@@ -147,7 +147,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def show_pcl(self, dict):
         self.GLView_OrgRadar.removePoints()
         for key in dict.keys():
-            self.GLView_OrgRadar.addPoints(pos=dict[key], size=1, color=map_hight_color[key])
+            if dict[key]:
+                self.GLView_OrgRadar.addPoints(pos=dict[key], size=1, color=map_hight_color[key])
         self.GLView_OrgRadar.addPointsDict()
 
     def show_objectsInfo(self, objList):
@@ -311,7 +312,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.lable_camera.setPixmap(image)
 
     def creat_new_log_folde(self):
-        curPath = os.path.dirname(__file__)  # 获取系统当前目录
+        curPath = os.path.dirname(os.path.realpath(sys.argv[0]))  # 获取系统当前目录
         sharedName = ConfigConstantData.logFile_head_affix + self.getCurrTimeStr()
         self.log_folder_path = curPath + ConfigConstantData.picture_saved_path + sharedName
         print('log folder path:', self.log_folder_path)

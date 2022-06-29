@@ -230,7 +230,7 @@ class ReadRadarLogFileThread(BaseThread):
 			# pcl
 			while len(self.currLineDataBytes) == ConfigConstantData.PclByteNr:
 				plcList = self.logFile.parse_pcl(self.currLineDataBytes)
-				timeStamp_s = plcList.getTimeStamp_s()
+				# timeStamp_s = plcList.getTimeStamp_s()
 				presentationPCL = plcList.getPresentationPcl()
 				self.logFile.next_line()
 				self.currLineDataBytes = self.logFile.get_data_bytes(self.logFile.currLineNr)
