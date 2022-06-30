@@ -5,6 +5,15 @@ __author__ = 'Yang Hongxu'
 # @File     : ConfigConstantData.py
 # @Project  : radar_fusion
 
+radar4D_548 = 0
+J3C = 1
+
+dataSource = J3C
+
+#ip
+J3C_socket_if = 'tcp://10.13.1.12:6060'
+
+
 #protocol
 ObjListByteNr = 9401
 PclByteNr = 35336

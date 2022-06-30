@@ -4,7 +4,10 @@ __author__ = 'Yang Hongxu'
 # @Time     : 2022/6/25 15:03
 import socket
 from socket import *
+import zmq
 import struct
+
+import ConfigConstantData
 
 
 class MyUdpSocket:
@@ -40,6 +43,12 @@ class MyUdpSocket:
 		self.udp_socket.close()
 
 
+class zmq_sub_client_socket:
+	def __init__(self, socket_if):
+		self.zmq_context = zmq.Context()
+		self.client_socket = self.zmq_context.socket(zmq.SUB)
+		self.client_socket.connect(socket_if)
+		self.client_socket.setsockopt(zmq.SUBSCRIBE, ''.encode('utf-8'))  # 接收所有消息
 
 
 

@@ -11,12 +11,16 @@ from PyQt5.QtCore import QThread, pyqtSignal,QWaitCondition,QMutex,QDateTime
 import os
 import re
 import presentationLayer
-from mySocket import MyUdpSocket
+from mySocket import MyUdpSocket, zmq_sub_client_socket
 import protocol
 import procAsamMdf
 # import CppApi
 import logFileMngt
 import ConfigConstantData
+
+
+import all_data_pb2
+
 
 class BaseThread(QThread):
 	def __init__(self, parent=None):
@@ -112,13 +116,23 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 	orgRadar_objInfo_signal = pyqtSignal(list)
 	def __init__(self):
 		super(OriginalRadarThread, self).__init__()
-		self.adapter_socket = MyUdpSocket()
+
+		if ConfigConstantData.dataSource == ConfigConstantData.radar4D_548:
+			self.socket = MyUdpSocket()
+		elif ConfigConstantData.dataSource == ConfigConstantData.J3C:
+			self.socket = zmq_sub_client_socket(ConfigConstantData.J3C_socket_if)
+			self.RadarObject = all_data_pb2.RadarObject()
+			self.FusedObject = all_data_pb2.FusedObject()
+			self.Data = all_data_pb2.Data()
+
 		self.frmNr = 0
 		self.mdf = procAsamMdf.MdfFile()
 		self.timestamp = time.time()
 		self.presentationPCL = presentationLayer.Pcl_Color()
 		self.counter = 0
 		self.radarLogFile = 0
+
+
 
 	def draw_obj(self,data_bytes):
 		self.counter +=1
@@ -138,43 +152,60 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		self.presentationPCL = dList.getPresentationPcl()
 		self.orgRadar_pcl_signal.emit(self.presentationPCL.dict_hight2color)
 
+	def rece_4DRadar_548_dara(self):
+		try:
+			recv_message, client = self.socket.udp_socket.recvfrom(self.socket.rcvBufLen)
+			# test write log
+			# if 50 == len(recv_message):
+			# 	data = struct.unpack('>50B', recv_message)
+			# 	print("data len 50",data)
+			# elif 158 == len(recv_message):
+			# 	data = struct.unpack('>158B', recv_message)
+			# 	print("data len 158",data)
+			# elif 803 == len(recv_message):
+			# 	data = struct.unpack('>803B', recv_message)
+			# 	print("data len 803",data)
+			if ConfigConstantData.ObjListByteNr == len(recv_message):  # objects
+				strData = recv_message.hex(' ') + '\n'
+				self.radarLogFile.write(strData)
+
+				data = struct.unpack('>9401B', recv_message)
+				bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.ObjListByteNr,
+																			byteorder='big')
+				self.draw_obj(bytes_data)
+
+			elif ConfigConstantData.PclByteNr == len(recv_message):  # pcl
+				strData = recv_message.hex(' ') + '\n'
+				self.radarLogFile.write(strData)
+
+				data = struct.unpack('>35336B', recv_message)
+				bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.PclByteNr,
+																			byteorder='big')
+				self.draw_PCL(bytes_data)
+		except Exception as e:
+			print(e)
+
+	def rece_J3C_dara(self):
+		try:
+			recv_message = self.socket.client_socket.recv()
+			self.Data.ParseFromString(recv_message)
+			print("recv_message",len(recv_message))
+			print("frame id",self.Data.frame_id)
+
+		except Exception as e:
+			print(e)
+
 	def run(self) -> None:
 		while True:
 			self.mutex.lock()
 			if self._isPause:
 				self.cond.wait(self.mutex)
 			print("OriginalRadarThread is running")
-			try:
-				recv_message, client = self.adapter_socket.udp_socket.recvfrom(self.adapter_socket.rcvBufLen)
-				#test write log
-				# if 50 == len(recv_message):
-				# 	data = struct.unpack('>50B', recv_message)
-				# 	print("data len 50",data)
-				# elif 158 == len(recv_message):
-				# 	data = struct.unpack('>158B', recv_message)
-				# 	print("data len 158",data)
-				# elif 803 == len(recv_message):
-				# 	data = struct.unpack('>803B', recv_message)
-				# 	print("data len 803",data)
-				if ConfigConstantData.ObjListByteNr == len(recv_message): # objects
-					strData = recv_message.hex(' ') +'\n'
-					self.radarLogFile.write(strData)
 
-					data = struct.unpack('>9401B', recv_message)
-					bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.ObjListByteNr, byteorder='big')
-					self.draw_obj(bytes_data)
-
-				elif ConfigConstantData.PclByteNr == len(recv_message): # pcl
-					strData = recv_message.hex(' ') +'\n'
-					self.radarLogFile.write(strData)
-
-					data = struct.unpack('>35336B', recv_message)
-					bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.PclByteNr, byteorder='big')
-					self.draw_PCL(bytes_data)
-
-
-			except Exception as e:
-				print(e)
+			if ConfigConstantData.dataSource == ConfigConstantData.radar4D_548:
+				self.rece_4DRadar_548_dara()
+			elif ConfigConstantData.dataSource == ConfigConstantData.J3C:
+				self.rece_J3C_dara()
 
 			self.mutex.unlock()
 
