@@ -17,6 +17,7 @@ import procAsamMdf
 # import CppApi
 import logFileMngt
 import ConfigConstantData
+import protobuf_if
 
 
 import all_data_pb2
@@ -117,13 +118,10 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 	def __init__(self):
 		super(OriginalRadarThread, self).__init__()
 
-		if ConfigConstantData.dataSource == ConfigConstantData.radar4D_548:
+		if ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
 			self.socket = MyUdpSocket()
-		elif ConfigConstantData.dataSource == ConfigConstantData.J3C:
+		elif ConfigConstantData.MachineType == ConfigConstantData.J3System:
 			self.socket = zmq_sub_client_socket(ConfigConstantData.J3C_socket_if)
-			self.RadarObject = all_data_pb2.RadarObject()
-			self.FusedObject = all_data_pb2.FusedObject()
-			self.Data = all_data_pb2.Data()
 
 		self.frmNr = 0
 		self.mdf = procAsamMdf.MdfFile()
@@ -132,7 +130,9 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		self.counter = 0
 		self.radarLogFile = 0
 
-
+	def log_a_frame_to_file_as_a_line(self, frame):
+		strData = frame.hex(' ') + '\n'
+		self.radarLogFile.write(strData)
 
 	def draw_obj(self,data_bytes):
 		self.counter +=1
@@ -166,8 +166,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 			# 	data = struct.unpack('>803B', recv_message)
 			# 	print("data len 803",data)
 			if ConfigConstantData.ObjListByteNr == len(recv_message):  # objects
-				strData = recv_message.hex(' ') + '\n'
-				self.radarLogFile.write(strData)
+				self.log_a_frame_to_file_as_a_line(recv_message)
 
 				data = struct.unpack('>9401B', recv_message)
 				bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.ObjListByteNr,
@@ -175,8 +174,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 				self.draw_obj(bytes_data)
 
 			elif ConfigConstantData.PclByteNr == len(recv_message):  # pcl
-				strData = recv_message.hex(' ') + '\n'
-				self.radarLogFile.write(strData)
+				self.log_a_frame_to_file_as_a_line(recv_message)
 
 				data = struct.unpack('>35336B', recv_message)
 				bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.PclByteNr,
@@ -185,15 +183,19 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		except Exception as e:
 			print(e)
 
-	def rece_J3C_dara(self):
+	def rece_J3C_data(self):
 		try:
 			recv_message = self.socket.client_socket.recv()
-			self.Data.ParseFromString(recv_message)
-			print("recv_message",len(recv_message))
-			print("frame id",self.Data.frame_id)
 
+			self.log_a_frame_to_file_as_a_line(recv_message)
+
+			self.Data = protobuf_if.All_Data(recv_message)
+			print("frame id",self.Data.frame_id)
+			objPresentations = self.Data.radar_obj_list_draw + self.Data.fused_obj_list_draw
+			self.orgRadar_obj_signal.emit(objPresentations)
 		except Exception as e:
-			print(e)
+			print('oranginal radar thread error:',e)
+
 
 	def run(self) -> None:
 		while True:
@@ -202,10 +204,49 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 				self.cond.wait(self.mutex)
 			print("OriginalRadarThread is running")
 
-			if ConfigConstantData.dataSource == ConfigConstantData.radar4D_548:
+			if ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
 				self.rece_4DRadar_548_dara()
-			elif ConfigConstantData.dataSource == ConfigConstantData.J3C:
-				self.rece_J3C_dara()
+			elif ConfigConstantData.MachineType == ConfigConstantData.J3System:
+				self.rece_J3C_data()
+
+			self.mutex.unlock()
+
+
+class J3A_MetaData_RecvThd(BaseThread):
+	meta_3DBox_obj_signal = pyqtSignal(list)
+	def __init__(self):
+		super(J3A_MetaData_RecvThd, self).__init__()
+		self.log_file = ''
+		self.socket = zmq_sub_client_socket(ConfigConstantData.J3A_socket_if)
+
+	def run(self) -> None:
+		while True:
+			self.mutex.lock()
+			if self._isPause:
+				self.cond.wait(self.mutex)
+			print("J3 camera meta data recv thread is running")
+			try:
+				recv_message = self.socket.client_socket.recv()
+
+				strData = recv_message.hex(' ') + '\n'
+				self.log_file.write(strData)
+
+				msg_len = len(recv_message)
+				if recv_message[0] == 8: # meta data
+					self.Meta = protobuf_if.Meta(recv_message)
+					print("frame_id is:", self.Meta.frame_id)
+					self.meta_3DBox_obj_signal.emit(self.Meta.obj3Dbox_list_draw)
+				elif recv_message[0] == 0:  # image info
+					print("1th long message len of %d"%msg_len)
+				elif recv_message[0] == 255:
+					if msg_len == 776:
+						print("3th long message len of 776")
+					else:
+						print("2th msg len of %d"%msg_len)
+
+
+			except Exception as e:
+				print('J3A meta data recv error',e)
 
 			self.mutex.unlock()
 

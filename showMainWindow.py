@@ -93,6 +93,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo) # 表格控件
         self.orgRadarThread.start()
 
+        if ConfigConstantData.MachineType == ConfigConstantData.J3System:
+            self.metaThread = threadMngt.J3A_MetaData_RecvThd()
+            self.metaThread.meta_3DBox_obj_signal.connect(self.show_objects)
+            self.metaThread.start()
+
+
         self.timeSlider.valueChanged.connect(self.on_timeslider_valueChanged)
         self.timeSlider.sliderReleased.connect(self.on_timeslider_valueChanged)
 
@@ -317,17 +323,20 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.log_folder_path = curPath + ConfigConstantData.picture_saved_path + sharedName
         print('log folder path:', self.log_folder_path)
         os.makedirs(self.log_folder_path)
-        self.orgRadarThread.radarLogFile = open(self.log_folder_path + "/" +sharedName+ ConfigConstantData.logfile_tail_affix, 'a')
-
+        self.orgRadarThread.radarLogFile = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_4D548, 'a')
+        self.metaThread.log_file = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_J3Camera, 'a')
     @pyqtSlot()  ##播放
     def on_btnPlay_clicked(self):
         if self.isOnlineMode:  # 实时数据采集
             if self.isRunning:  # 如果正在运行，则暂停，并保存文件
                 self.orgRadarThread.pause()
+                self.metaThread.pause()
                 self.btnPlay.setIcon(self.iconPlay)
                 self.orgRadarThread.radarLogFile.close()
+                self.metaThread.log_file.close()
             else:  # 如果没有运行，则开始记录
                 self.creat_new_log_folde()
+                self.metaThread.resume()
                 self.orgRadarThread.resume()
                 self.btnPlay.setIcon(self.iconPause)
 
