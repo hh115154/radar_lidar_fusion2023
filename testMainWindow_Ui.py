@@ -15,8 +15,11 @@ __author__ = 'Yang Hongxu'
 from PyQt5 import QtCore, QtGui, QtWidgets
 from pyqtgraph.Qt import QtCore, QtGui
 import myControls
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import Qt
 from PyQt5.QtMultimediaWidgets import QCameraViewfinder
 
+import ConfigConstantData
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -29,69 +32,87 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         MainWindow.setCentralWidget(self.centralwidget)
 
-        #left
-        self.splitter_vedio_pcl = QtWidgets.QSplitter(QtCore.Qt.Vertical)
-        # verticalLayout = QtWidgets.QVBoxLayout()
+        # 主分隔条，左右分隔
+        self.splitter_org_obj = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
 
-        #left.top
-        # self.swt_camera_stacklayout = QtWidgets.QStackedLayout()
-        # self.swt_camera_stackWidget= QtWidgets.QStackedWidget()
-        #
-        # self.videoWidget = QVideoWidget()
-        # self.videoWidget.setObjectName("videoWidget")
-
-        #
-        # self.viewFinder = QCameraViewfinder()
-        # self.viewFinder.setMinimumSize(QtCore.QSize(150, 0))
-        # self.viewFinder.setObjectName("viewFinder")
-        # self.swt_camera_stacklayout.addWidget(self.viewFinder)
-
-        self.lable_camera = QtWidgets.QLabel() # 显示离线图片
-        self.lable_camera.setObjectName("lable_camera")
-        # self.lable_camera.setFixedSize(QtCore.QSize(320, 240))
-        self.lable_camera.setScaledContents(True)
-
-        # self.swt_camera_stackWidget.addWidget(self.lable_camera)
-        # self.swt_camera_stackWidget.addWidget(self.videoWidget)
-
-        # self.lable_camera.setDisabled(True)
-        # self.videoWidget.setDisabled(True)
-        self.splitter_vedio_pcl.addWidget(self.lable_camera)
-
-        # splitter_vedio_pcl.addWidget(self.swt_camera_stacklayout)
-
-        # 左下角小控件
-        self.GLView_OrgRadar = myControls.MyGLViewWidget()
-        self.splitter_vedio_pcl.addWidget(self.GLView_OrgRadar)
-        # verticalLayout.setStretch(0,1)
-        # verticalLayout.setStretch(1,1)
-
-
-        # 右侧大控件
+        # 竖向第二条分割拖动条
         self.splitter_glview_table = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        # self.GLView_FuseRadar = myControls.MyGLViewWidget(rotationMethod="quaternion")
-        self.GLView_FuseRadar = myControls.MyGLViewWidget()
 
-        self.splitter_glview_table.addWidget(self.GLView_FuseRadar)
+
+        # 最下面的水平布局，存放几个按钮
+        btns_area_horizontallayout = QtWidgets.QHBoxLayout()
+
+        if ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
+            #left
+            self.splitter_vedio_pcl = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+
+            #left.top - 左上角视频
+            self.lable_camera = QtWidgets.QLabel() # 显示离线图片
+            self.lable_camera.setObjectName("lable_camera")
+            self.lable_camera.setScaledContents(True)
+
+            self.splitter_vedio_pcl.addWidget(self.lable_camera)
+
+            # 左下角小控件
+            self.GLView_OrgRadar = myControls.MyGLViewWidget()
+            self.GLView_OrgRadar.setCameraPosition(elevation=90)
+            self.GLView_OrgRadar.setCameraParams(fov=90)
+            self.splitter_vedio_pcl.addWidget(self.GLView_OrgRadar)
+
+            self.splitter_org_obj.addWidget(self.splitter_vedio_pcl)
+
+            # 3D空间，显示目标物
+            self.GLView_FuseRadar = myControls.MyGLViewWidget()
+            self.GLView_FuseRadar.setCameraPosition(elevation=90)
+            self.GLView_FuseRadar.setCameraParams(fov=90)
+            objControl = self.GLView_FuseRadar
+
+        elif ConfigConstantData.MachineType == ConfigConstantData.J3System:
+
+            #用于显示多层图片的lable
+            self.lable_main = QtWidgets.QLabel()
+            self.lable_main.setScaledContents(True)
+            self.lable_main.setFixedSize(1127, 845)
+            objControl = self.lable_main
+
+            # 创建一个GroupBox组
+            self.groupBox = QGroupBox("图层选项")
+            self.groupBox.setFlat(False)
+
+            # 创建复选框1，并默认选中，当状态改变时信号触发事件
+            self.checkBox_pic = QCheckBox("图像")
+            self.checkBox_pic.setChecked(True)
+
+            # 创建复选框，标记状态改变时信号触发事件
+            self.checkBox_OrgObj = QCheckBox("目标")
+            self.checkBox_OrgObj.setChecked(True)
+
+            # 创建复选框3，设置为3状态，设置默认选中状态为半选状态，当状态改变时信号触发事件
+            self.checkBox_Fusion = QCheckBox("融合")
+            self.checkBox_Fusion.setChecked(True)
+
+
+            self.checkBox_layout = QtWidgets.QHBoxLayout()
+            self.checkBox_layout.addWidget(self.checkBox_pic)
+            self.checkBox_layout.addWidget(self.checkBox_OrgObj)
+            self.checkBox_layout.addWidget(self.checkBox_Fusion)
+            self.groupBox.setLayout(self.checkBox_layout)
+
+            btns_area_horizontallayout.addWidget(self.groupBox)
+
+        self.splitter_glview_table.addWidget(objControl)
 
         self.tableView = QtWidgets.QTableView()
         # 水平方向标签拓展剩下的窗口部分，填满表格
         self.tableView.horizontalHeader().setStretchLastSection(True)
         # 水平方向，表格大小拓展到适当的尺寸
-        # self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.tableView.horizontalHeader().setSectionResizeMode( QtWidgets.QHeaderView.Interactive)
-
         self.tableView.verticalHeader().setDefaultSectionSize(38)
         self.splitter_glview_table.addWidget(self.tableView)
 
-        self.splitter_org_obj = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-
-        # horizontalLayout = QtWidgets.QHBoxLayout()
-        self.splitter_org_obj.addWidget(self.splitter_vedio_pcl)
-
+        # 主分隔条右侧先放一个分给条
         self.splitter_org_obj.addWidget(self.splitter_glview_table)
-        # horizontalLayout.setStretch(0,1)
-        # horizontalLayout.setStretch(1,2)
+
 
         self.base_verticalLayout = QtWidgets.QVBoxLayout()
         self.base_verticalLayout.addWidget(self.splitter_org_obj)
@@ -105,8 +126,6 @@ class Ui_MainWindow(object):
 
         play_area_verticalLayout.addWidget(self.timeSlider)
 
-        btns_area_horizontallayout = QtWidgets.QHBoxLayout()
-        btns_area_horizontallayout.setObjectName("btnshorizontalLayout")
 
 
         self.fileName = QtWidgets.QLabel("无文件")
@@ -117,6 +136,7 @@ class Ui_MainWindow(object):
         self.cb = QtWidgets.QComboBox()
         self.cb.addItem("离线文件读取")
         self.cb.addItem("实时数据采集")
+        self.cb.setCurrentIndex(1)
         btns_area_horizontallayout.addWidget(self.cb)
 
         self.btnOpen = QtWidgets.QPushButton()
@@ -154,14 +174,14 @@ class Ui_MainWindow(object):
         self.iconPause.addPixmap(QtGui.QPixmap("./images/622.bmp"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
 
-        self.btnStop = QtWidgets.QPushButton()
-        self.btnStop.setEnabled(False)
-        self.btnStop.setText("")
-        icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap("./images/624.bmp"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.btnStop.setIcon(icon3)
-        self.btnStop.setObjectName("btnStop")
-        btns_area_horizontallayout.addWidget(self.btnStop)
+        # self.btnStop = QtWidgets.QPushButton()
+        # self.btnStop.setEnabled(False)
+        # self.btnStop.setText("")
+        # icon3 = QtGui.QIcon()
+        # icon3.addPixmap(QtGui.QPixmap("./images/624.bmp"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        # self.btnStop.setIcon(icon3)
+        # self.btnStop.setObjectName("btnStop")
+        # btns_area_horizontallayout.addWidget(self.btnStop)
 
         self.LabRatio = QtWidgets.QLabel("进度")
         self.LabRatio.setMinimumSize(QtCore.QSize(60, 0))

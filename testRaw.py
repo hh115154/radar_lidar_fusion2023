@@ -1,60 +1,22 @@
-#!
+# encoding:utf-8
 
-import sys
+import cv2
+import numpy as np
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.uic import loadUi
+pic_shape = (480, 640, 3)
+image = np.zeros(pic_shape, dtype=np.uint8)  # 黑色画布
+GrayImage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+x, y, w, h = cv2.boundingRect(GrayImage)
 
-class fileClass(QMainWindow):
-    def __init__(self):
-        super(fileClass, self).__init__()
-        self.initUI()
-        self.fname = []
-
-    def initUI(self):
-        self.uipage = loadUi('./fileUI.ui', self)
-        self.uipage.actionOpen.triggered.connect(self.openFileHandle)
-        self.uipage.actionSave.triggered.connect(self.saveFileHandle1)
-
-    def openFileHandle(self):
-        print('open file')
-        self.fname = QFileDialog.getOpenFileName(self, 'Open File', './', 'Txt (*.txt)')
-        if self.fname[0]:
-            with open(self.fname[0], 'r', encoding='utf-8') as f:
-                self.uipage.plainTextEdit.setPlainText(f.read())
-                f.close()
-
-    def saveFileHandle(self):
-        print('save file')
-        self.fname = QFileDialog.getSaveFileName(self, 'Write File', './', 'All(*.*)')
-        if self.fname[0]:
-            with open(self.fname[0], 'w', encoding='utf-8') as f:
-                datatmp = self.uipage.plainTextEdit.toPlainText()
-                f.write(datatmp)
-                f.close()
-
-    def saveFileHandle1(self):
-        try:
-            if self.fname[0]:
-                with open(self.fname[0], 'w', encoding='utf-8') as f:
-                    datatmp = self.uipage.plainTextEdit.toPlainText()
-                    f.write(datatmp)
-                    f.close()
-        except:
-            print('请先打开文件')
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-
-    byte_data = "\xff\xfeM\x00a\x00r\x00c\x00h\x00".encode("utf-16")
-    print("byte converted to hexadecimal value:", byte_data.hex(' '))
+draw_1 = cv2.rectangle(GrayImage, (10, 20), (x + w, y + h), (0, 255, 0), 2)
+# 参数：pt1,对角坐标１, pt2:对角坐标２
+# 注意这里根据两个点pt1,pt2,确定了对角线的位置，进而确定了矩形的位置
+# The function cv::rectangle draws a rectangle outline or a filled rectangle whose two opposite corners are pt1 and pt2.
+# draw_0 = cv2.rectangle(image, (2 * w, 2 * h), (3 * w, 3 * h))
 
 
 
-    mw = fileClass()
-    mw.show()
-    sys.exit(app.exec_())
+cv2.imshow("draw_0", draw_1)  # 显示画过矩形框的图片
+cv2.waitKey(0)
+cv2.destroyWindow("draw_0")

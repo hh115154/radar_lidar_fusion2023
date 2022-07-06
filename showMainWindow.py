@@ -14,7 +14,7 @@ from PyQt5.QtCore import QThread, pyqtSignal,QTimer,QDateTime
 from PyQt5 import QtCore,QtGui
 import pyqtgraph.opengl as gl
 import pyqtgraph
-
+import numpy as np
 import cv2
 import threadMngt
 from PyQt5.QtMultimedia import (QCameraInfo,QCameraImageCapture,
@@ -35,15 +35,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         super(MyController, self).__init__()
         self.setupUi(self)
         self.testCntr = 0
-
-
-        self.GLView_OrgRadar.setCameraPosition(elevation=90)
-        self.GLView_OrgRadar.setCameraParams(fov=90)
-
-        self.GLView_FuseRadar.setCameraPosition(elevation=90)
-        self.GLView_FuseRadar.setCameraParams(fov=90)
-
-        # self.splitter_vedio_pcl.setFixedSize(200,0)
 
 
         self.model = QtGui.QStandardItemModel(15, 15)
@@ -68,46 +59,136 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.right_button.clicked.connect(self.up_time)
         # 快退
         self.left_button.clicked.connect(self.down_time)
-
+        # 下拉选项
         self.cb.currentIndexChanged.connect(self.RunModeChange)
-
-        self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # QCamera对象
-        self.picNameNr = int(0)
-
-        # cameras = QCameraInfo.availableCameras()  # list[QCameraInfo]
-        # if len(cameras) > 0:
-        #     self.__iniCamera()  # 初始化摄像头
-            # self.__iniImageCapture()  # 初始化静态画图
-
-        self.set_simulink_logfile_mode()
-
-        ###########old code############
-        self.radar_timer_step = ConfigConstantData.timer_readlogfile_ms
-        self.timer_radar = QtCore.QTimer()  # 控制雷达的刷新频率
-        self.timer_radar.timeout.connect(self.resume_logThread)
-        self.timer_radar.start(self.radar_timer_step)
-
-        self.orgRadarThread = threadMngt.OriginalRadarThread()
-        self.orgRadarThread.orgRadar_pcl_signal.connect(self.show_pcl)  # 仿真文件数据
-        self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
-        self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo) # 表格控件
-        self.orgRadarThread.start()
-
-        if ConfigConstantData.MachineType == ConfigConstantData.J3System:
-            self.metaThread = threadMngt.J3A_MetaData_RecvThd()
-            self.metaThread.meta_3DBox_obj_signal.connect(self.show_objects)
-            self.metaThread.start()
-
-
+        # 进度条
         self.timeSlider.valueChanged.connect(self.on_timeslider_valueChanged)
         self.timeSlider.sliderReleased.connect(self.on_timeslider_valueChanged)
 
-        self.total_time_s = 0
-
+        #模式初始化
         self.set_default_mode()
 
+
+        # 变量初始化
+        self.picNameNr = int(0)
+        self.total_time_s = 0
         self.readRadarLogFileThread = None
-        ########new code##############
+
+        self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # QCamera对象
+
+        if ConfigConstantData.MachineType == ConfigConstantData.J3System:
+            self.metaThread = threadMngt.J3A_MetaData_RecvThd()
+            self.metaThread.meta_3DBox_obj_signal.connect(self.show_meta_objects)
+            self.metaThread.start()
+
+            self.timer_camera = QtCore.QTimer()  # 控制雷达的刷新频率
+            self.timer_camera.timeout.connect(self.multi_pic_show)
+            timer_ms = 100
+            self.timer_camera.start(timer_ms)
+
+
+            pic_shape = (480, 640, 3)
+            self.black_board = np.zeros(pic_shape, dtype=np.uint8)  # 黑色画布
+            self.pic_org = self.black_board
+            self.pic_meta = self.black_board
+            self.pic_fusion = self.black_board
+
+            self.checkBox_pic.stateChanged.connect(self.set_multi_pic_weight)
+            self.checkBox_OrgObj.stateChanged.connect(self.set_multi_pic_weight)
+            self.checkBox_Fusion.stateChanged.connect(self.set_multi_pic_weight)
+
+            self.weight_pic_org = 1
+            self.weight_pic_fusion = 1
+            self.weight_pic_meta = 1
+
+        elif ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
+
+            self.radar_timer_step = ConfigConstantData.timer_readlogfile_ms
+            self.timer_radar = QtCore.QTimer()  # 控制雷达的刷新频率
+            self.timer_radar.timeout.connect(self.resume_logThread)
+            self.timer_radar.start(self.radar_timer_step)
+
+            self.orgRadarThread = threadMngt.OriginalRadarThread()
+            self.orgRadarThread.orgRadar_pcl_signal.connect(self.show_pcl)  # 仿真文件数据
+            self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
+            self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
+            self.orgRadarThread.start()
+    def set_multi_pic_weight(self):
+        if self.checkBox_pic.isChecked():
+            self.weight_pic_org = 1
+        else:
+            self.weight_pic_org = 0
+
+        if self.checkBox_OrgObj.isChecked():
+            self.weight_pic_meta = 1
+        else:
+            self.weight_pic_meta = 0
+
+        if self.checkBox_Fusion.isChecked():
+            self.weight_pic_fusion = 1
+        else:
+            self.weight_pic_fusion = 0
+
+
+    def set_org_pic(self):
+        if self.checkBox_pic.isChecked():
+            r, f = self.camera.read()
+            if r:
+                self.pic_org = f
+        else:
+            self.pic_org = self.black_board
+
+    def set_meta_pic(self):
+        if self.checkBox_OrgObj.isChecked():
+            x = 10
+            y = 20
+            w = 30
+            h = 40
+            class_name = 'test text'
+            cv2.rectangle(self.pic_meta, (x, y), (x + w, y + h), (128, 42, 42), 1)  # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
+            cv2.putText(self.pic_meta, class_name, (x, y - 10), cv2.FONT_HERSHEY_PLAIN, 2, (128, 42, 42), 1)  # 画面，文本内容，位置
+        else:
+            self.pic_meta = self.black_board
+
+    def set_fusion_pic(self):
+        if self.checkBox_Fusion.isChecked():
+            x = 100
+            y = 200
+            w = 30
+            h = 40
+            class_name = 'test aaa'
+            cv2.rectangle(self.pic_fusion, (x, y), (x + w, y + h), (128, 42, 42), 1)  # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
+            cv2.putText(self.pic_fusion, class_name, (x, y - 10), cv2.FONT_HERSHEY_PLAIN, 2, (128, 42, 42),1)  # 画面，文本内容，位置
+        else:
+            self.pic_fusion = self.black_board
+
+
+
+    def multi_pic_show(self):
+        self.set_org_pic()
+        self.set_meta_pic()
+        self.set_fusion_pic()
+
+
+        pic = cv2.addWeighted(self.pic_org, self.weight_pic_org, self.pic_meta, self.weight_pic_meta, 0)
+        pic = cv2.addWeighted(pic, 1, self.pic_fusion, self.weight_pic_fusion,  0)
+
+
+        pic = cv2.cvtColor(pic, cv2.COLOR_BGR2RGB)
+        pic = QtGui.QImage(pic.data, pic.shape[1], pic.shape[0],QImage.Format_RGB888)
+        self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
+
+
+
+        # # self.black_board = cv2.cvtColor(self.black_board, cv2.COLOR_BGR2RGB)
+        # pic = QtGui.QImage(self.black_board, self.black_board.shape[1], self.black_board.shape[0],QImage.Format_RGB888)
+        # self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
+
+
+
+    def show_meta_objects(self):
+        pass
+
     def update_log_progress(self):
         self.timeSlider.setValue(self.readRadarLogFileThread.logFile.currLineNr)
         currTime_s =self.total_time_s * self.timeSlider.value()/self.timeSlider.maximum()
@@ -142,13 +223,14 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def set_default_mode(self):
         self.isRunning = False
         self.isOnlineMode = True
-        self.cb.setCurrentIndex(1)
         self.btnPlay.setDisabled(False)
-        self.btnStop.setDisabled(True)
+        # self.btnStop.setDisabled(True)
         self.left_button.setDisabled(True)
         self.right_button.setDisabled(True)
         self.timeSlider.setDisabled(True)
         self.cb.setDisabled(False)
+        self.btnOpen.setDisabled(True)
+
 
     def show_pcl(self, dict):
         self.GLView_OrgRadar.removePoints()
