@@ -82,7 +82,6 @@ map_color = {ObjectType.Car: MyColor.Green,
              ObjectType.Underdrivable: MyColor.Pink}
 
 
-
 map_hight = {ObjectType.Car: 2,
              ObjectType.Truck: 4,
              ObjectType.Motorcycle: 1,
@@ -98,14 +97,22 @@ map_hight = {ObjectType.Car: 2,
 class BaseObject:
     def __init__(self, length, width, x, y, z, _type):
         self.type = ObjectType(_type)
-        self.color = map_color[self.type]
-        self.height = map_hight[self.type]
+        if map_color.has_key(self.type):
+            self.color = map_color[self.type]
+        else:
+            self.color = MyColor.White
+
+        if map_hight.has_key(self.type):
+            self.hight = map_hight[self.type]
+        else:
+            self.hight = 0
 
         self.length = length
         self.width = width
 
         # self.posn = (-y, x + width, z)
         self.posn = (-y, x , z)
+
 
 class MyCuboid(BaseObject):
     def __init__(self, length, width, x, y, z, _type, _id, _absV_x, _absV_y, _stMovement=0, _probability=0):
@@ -115,6 +122,13 @@ class MyCuboid(BaseObject):
         self.probability = _probability
         self.absV_x = _absV_x
         self.absV_y = _absV_y
+
+    def setHight(self, hight):
+        self.height = hight
+
+
+
+
 
 # ifDll = CDLL('./fit_1.dll')
 # resType = ctypes.c_float * 3

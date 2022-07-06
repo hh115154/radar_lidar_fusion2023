@@ -6,12 +6,13 @@ __author__ = 'Yang Hongxu'
 # @Project  : radar_fusion
 
 radar4D_548 = 0
-J3C = 1
+J3System = 1
 
-dataSource = J3C
+MachineType = J3System
 
 #ip
 J3C_socket_if = 'tcp://10.13.1.12:6060'
+J3A_socket_if = 'tcp://10.13.1.10:5560'
 
 
 #protocol
@@ -24,5 +25,7 @@ timer_readlogfile_ms = 50# 實際應該是50
 # log file and pic file
 picture_saved_path = '/myLogFolder/'
 logFile_head_affix = 'Record_'
-logfile_tail_affix = '.someip.ars540.hex'
+logfile_tail_affix_4D548 = '.someip.ars540.hex'
+logfile_tail_affix_J3Camera = '.zmq.j3camera.hex'
+
 
