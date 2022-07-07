@@ -4,6 +4,7 @@ __author__ = 'Yang Hongxu'
 # @Time     : 2022/6/30 20:20
 # @File     : protobuf_if.py
 # @Project  : radar_fusion
+import ConfigConstantData
 import presentationLayer
 import all_data_pb2
 import meta_pb2
@@ -67,29 +68,51 @@ class Meta:
         self.version = meta.version
         self.meta_data = meta.data
 
-        self.obj3Dbox_list_draw = self.get_3DBox_draw_List()
+        self.obj2Dbox_list,self.obj3Dbox_list = self.get_3DBox_draw_List()
+    def b_3D_pos_valid(self, left, right, top, bottom):
+        pass
+
+    def b_2D_pos_valid(self,x0,y0,x1,y1):
+        return x0>=0 and y0>=0 and x1>=x0 and y1>=y0 and x1<=ConfigConstantData.pic_width and y1<=ConfigConstantData.pic_height
 
     def get_3DBox_draw_List(self): # world_info
-        box_list = []
+        box_2d_list = []
+        box_3d_list = []
         obs = self.meta_data.structure_perception.obstacles
         if len(obs)>0: # each camera device has a obs
             obj_nr = len(obs[0].obstacle)
-            print('mata 3D box nr is:',obj_nr)
+
             for i in range(obj_nr):
                 obstacle = obs[0].obstacle[i]
-                obj = obstacle.world_info
-                if obj.width>0 and obj.length>0 and obj.height>0:
-                    obj_draw_info = presentationLayer.MyCuboid(width=obj.width, length=obj.length,
-                                                               x=obj.position.x, y=obj.position.y,
-                                                               z=obj.position.z,
-                                                               _type=0,
-                                                               _id=obstacle.id,
-                                                               _stMovement=0,  # ?
-                                                               _probability=obstacle.conf,
-                                                               _absV_x=obj.vel.vx,
-                                                               _absV_y=obj.vel.vy)
-                    obj_draw_info.setHight(obj.height)
-                    box_list.append(obj_draw_info)
-        return box_list
+                rect = obstacle.img_info.rect
+                box = obstacle.img_info.box
+                if rect:
+                    x = rect.left
+                    y = rect.top
+                    length = rect.right - rect.left
+                    width = rect.bottom - rect.top
+                    box_2d = presentationLayer.Box_2D(x=x, y=y, length=length, width=width)
+                    box_2d.set_text("id:%d" % obstacle.id)
+                    box_2d.set_color(presentationLayer.My_cv2_Color.Red)
+                    box_2d_list.append(box_2d)
+
+                if box.conf>0:
+                    points = []
+                    points.append((box.upper_lb.x, box.upper_lb.y))
+                    points.append((box.upper_rb.x, box.upper_rb.y))
+                    points.append((box.upper_rt.x, box.upper_rt.y))
+                    points.append((box.upper_lt.x, box.upper_lt.y))
+                    points.append((box.lower_lb.x, box.lower_lb.y))
+                    points.append((box.lower_rb.x, box.lower_rb.y))
+                    points.append((box.lower_rt.x, box.lower_rt.y))
+                    points.append((box.lower_lt.x, box.lower_lt.y))
+                    box_3d = presentationLayer.Box_3D(points=points)
+                    box_3d.set_text("id:%d" % obstacle.id)
+                    box_3d.set_color(presentationLayer.My_cv2_Color.Green)
+                    box_3d_list.append(box_3d)
+
+        print('mata 3D box conter is:', len(box_3d_list))
+        print('mata 2D box conter is:', len(box_2d_list))
+        return box_2d_list, box_3d_list
 
 

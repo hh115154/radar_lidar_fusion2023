@@ -8,7 +8,7 @@ from PyQt5 import QtGui
 from ctypes import *
 import ctypes
 import cv2
-
+import numpy as np
 class Pcl_Color():
     def __init__(self):
         self.dict_hight2color = {1: [], 2: [], 3: [], 4: [], 5: []}
@@ -139,26 +139,103 @@ class My_cv2_Color():
     Orange = (0, 128, 255)
 
 
-class Box_2D:
-    def __init__(self, x, y, length, width, color=My_cv2_Color.White, pen_size=3,text=''):
-        self.x = x
-        self.y = y
-        self.length = length
-        self.width = width
-        self.color = color
-        self.pen_size = pen_size
-        self.text = text
-
-    def set_text(self,text):
-        self.text = text
-
+class obj_shape:
+    def __init__(self):
+        self.color = My_cv2_Color.White
+        self.text = ''
+        self.pen_size = 3
+        self.font_size = 4
 
     def set_color(self, color):
         self.color = color
 
+    def set_text(self, text):
+        self.text = text
+
+    def set_pen_size(self, pen_size):
+        self.pen_size = pen_size
+
+    def set_font_size(self, font_size):
+        self.font_size = font_size
+
+
+class Box_2D(obj_shape):
+    def __init__(self, x, y, length, width):
+        super(Box_2D, self).__init__()
+        self.x = int(x)
+        self.y = int(y)
+        self.length = int(length)
+        self.width = int(width)
+
     def draw_to_pic(self, pic):
+        # # b_box 左上角坐标
+        # ptLeftTop = np.array([self.x, self.y])
+        # # 文本框左上角坐标
+        # textleftop = []
+        # # b_box 右下角坐标
+        # ptRightBottom = np.array([self.x + self.length, self.y + self.width])
+        # # 画 b_box
+        # cv2.rectangle(pic, tuple(ptLeftTop), tuple(ptRightBottom), self.color, self.pen_size)
+        # # 获取文字区域框大小
+        # t_size = cv2.getTextSize(self.text, self.font_size, cv2.FONT_HERSHEY_PLAIN, self.pen_size)[0]
+        # # 获取 文字区域右下角坐标
+        # textlbottom = ptLeftTop + np.array(list(t_size))
+        # # 绘制文字区域矩形框
+        # cv2.rectangle(pic, tuple(ptLeftTop), tuple(textlbottom), self.color, -1)
+        # # 计算文字起始位置偏移
+        # ptLeftTop[1] = ptLeftTop[1] + (t_size[1] / 2 + 4)
+        # # 绘字
+        # de_color = (255-self.color[0],255-self.color[1],255-self.color[2])
+        # cv2.putText(pic, self.text, tuple(ptLeftTop), cv2.FONT_HERSHEY_PLAIN, 2, de_color, self.pen_size)
+
+
         cv2.rectangle(pic, (self.x, self.y), (self.x + self.length, self.y + self.width), self.color, self.pen_size)  # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
-        cv2.putText(pic, self.text, (self.x, self.y - 10), cv2.FONT_HERSHEY_PLAIN, 2, self.color, self.pen_size)  # 画面，文本内容，位置
+        cv2.putText(pic, self.text, (self.x, self.y - 10), cv2.FONT_HERSHEY_PLAIN, self.font_size, self.color, self.pen_size)  # 画面，文本内容，位置
+
+class Box_3D(obj_shape):
+
+    #
+    #     3-----2
+    # 0---|--1  |
+    # |   7--|--6
+    # 4------5
+
+    def __init__(self, point_list):
+        super(Box_3D, self).__init__()
+        self.point_list = point_list
+        self.trans_pos2int()
+
+    def trans_pos2int(self):
+        print("need to trans pt position to int !!")
+
+    def draw_to_pic(self, pic):
+        # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
+        cv2.line(pic, self.point_list[0], self.point_list[1], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[1], self.point_list[2], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[2], self.point_list[3], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[3], self.point_list[0], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[4], self.point_list[5], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[5], self.point_list[6], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[6], self.point_list[7], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[7], self.point_list[4], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[0], self.point_list[4], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[1], self.point_list[5], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[2], self.point_list[6], self.color, self.pen_size)
+        cv2.line(pic, self.point_list[3], self.point_list[7], self.color, self.pen_size)
+        # # 获取文字区域框大小
+        # t_size = cv2.getTextSize(self.text, self.font_size, cv2.FONT_HERSHEY_PLAIN, self.pen_size)[0]
+        # # 获取 文字区域右下角坐标
+        # textlbottom = self.point_list[0] + np.array(list(t_size))
+        # # 绘制文字区域矩形框
+        # cv2.rectangle(pic, self.point_list[0], textlbottom, self.color, -1)
+        # # 计算文字起始位置偏移
+        # ptLeftTop = self.point_list[0] + np.array(list(t_size))
+        # # 绘字
+        # cv2.putText(pic, self.text, ptLeftTop, cv2.FONT_HERSHEY_PLAIN, self.font_size, self.color, self.pen_size)
+
+
+        cv2.putText(pic, self.text, (self.point_list[0][0], self.point_list[0][1]), cv2.FONT_HERSHEY_PLAIN, self.font_size, self.color, self.pen_size)
+
 
 
 

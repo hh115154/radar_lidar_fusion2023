@@ -38,7 +38,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.setupUi(self)
         self.testCntr = 0
 
-
+        # table
         self.model = QtGui.QStandardItemModel(15, 15)
         self.model.setVerticalHeaderLabels(['u_ID',
                                             'u_Position_X',
@@ -56,6 +56,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                                             'u_Shape_Length_Edge_Mean',
                                             'u_Shape_Width_Edge_Mean'])
         self.tableView.setModel(self.model)
+
 
         # 快进
         self.right_button.clicked.connect(self.up_time)
@@ -80,16 +81,16 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         if ConfigConstantData.MachineType == ConfigConstantData.J3System:
             self.metaThread = threadMngt.J3A_MetaData_RecvThd()
-            self.metaThread.meta_3DBox_obj_signal.connect(self.show_meta_objects)
+            self.metaThread.meta_obj_list_ignal.connect(self.show_meta_objects)
             self.metaThread.start()
+            self.metaThread.resume()
 
             self.timer_camera = QtCore.QTimer()  # 控制雷达的刷新频率
             self.timer_camera.timeout.connect(self.multi_pic_show)
             timer_ms = 100
             self.timer_camera.start(timer_ms)
 
-
-            self.pic_shape = ( 2160,3840,3)
+            self.pic_shape = (ConfigConstantData.pic_height, ConfigConstantData.pic_width,3)
             self.pic_org = np.zeros(self.pic_shape, dtype=np.uint8)
             self.pic_meta = np.zeros(self.pic_shape, dtype=np.uint8)
             self.pic_fusion = np.zeros(self.pic_shape, dtype=np.uint8)
@@ -104,7 +105,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.weight_pic_fusion = 1
             self.weight_pic_meta = 1
 
+            self.meta_2d_obj_list = []
+            self.meta_3d_obj_list = []
+
         elif ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
+
 
             self.radar_timer_step = ConfigConstantData.timer_readlogfile_ms
             self.timer_radar = QtCore.QTimer()  # 控制雷达的刷新频率
@@ -116,8 +121,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
             self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
             self.orgRadarThread.start()
-    def clear_pic(self,pic):
-        pic = np.zeros(self.pic_shape, dtype=np.uint8)
+    def clear_pic(self):
+        return np.zeros(self.pic_shape, dtype=np.uint8)
 
 
     def set_multi_pic_weight(self):
@@ -138,39 +143,60 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
 
     def set_org_pic(self):
+        self.pic_org = self.clear_pic()
         if self.checkBox_pic.isChecked():
             r, f = self.camera.read()
             if r:
-                self.pic_org =  cv2.resize(f, (3840, 2160))
-        else:
-            self.clear_pic(self.pic_org)
+                self.pic_org = cv2.resize(f, (ConfigConstantData.pic_width, ConfigConstantData.pic_height))
+
+
 
     def set_meta_pic(self):
+        self.pic_meta = self.clear_pic()
         if self.checkBox_OrgObj.isChecked():
-            box = presentationLayer.Box_2D(100,20,30,40)
-            box.set_color(presentationLayer.My_cv2_Color.Red)
-            box.set_text("hello")
-            box.draw_to_pic(self.pic_meta)
-        else:
-            self.clear_pic(self.pic_meta)
+            for box_2d in self.meta_2d_obj_list:
+                box_2d.draw_to_pic(self.pic_meta)
+
+            for box_3d in self.meta_3d_obj_list:
+                box_3d.draw_to_pic(self.pic_meta)
+
+            # box = presentationLayer.Box_2D(100.123,20.456,30.789,40.111)
+            # box.set_color(presentationLayer.My_cv2_Color.Red)
+            # box.set_text("hello")
+            # box.draw_to_pic(self.pic_meta)
+            #
+            # pis=[(80,400),(180,400),(200,300),(100,300),(80,600),(180,600),(200,500),(100,500)]
+            # box_3D = presentationLayer.Box_3D(pis)
+            # box_3D.set_color(presentationLayer.My_cv2_Color.Red)
+            # box_3D.set_text("hello 3D  box")
+            # box_3D.draw_to_pic(self.pic_meta)
+
+
 
     def set_fusion_pic(self):
+        self.pic_fusion = self.clear_pic()
         if self.checkBox_Fusion.isChecked():
-            box = presentationLayer.Box_2D(100,2000,30,40)
-            box.set_color(presentationLayer.My_cv2_Color.Green)
-            box.set_text("fusion")
-            box.draw_to_pic(self.pic_fusion)
-
-        else:
-            self.clear_pic(self.pic_fusion)
+            # box = presentationLayer.Box_2D(100,2000,30,40)
+            # box.set_color(presentationLayer.My_cv2_Color.Green)
+            # box.set_text("fusion")
+            # box.draw_to_pic(self.pic_fusion)
+            pass
 
 
+
+    def clear_lable(self):
+        pic = np.zeros(self.pic_shape, dtype=np.uint8)
+        pic = cv2.cvtColor(pic, cv2.COLOR_BGR2RGB)
+        pic = QtGui.QImage(pic.data, pic.shape[1], pic.shape[0], QImage.Format_RGB888)
+        self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
 
     def multi_pic_show(self):
         self.set_org_pic()
         self.set_meta_pic()
         self.set_fusion_pic()
 
+
+        self.clear_lable()
 
         pic = cv2.addWeighted(self.pic_org, self.weight_pic_org, self.pic_meta, self.weight_pic_meta, 0)
         pic = cv2.addWeighted(pic, 1, self.pic_fusion, self.weight_pic_fusion,  0)
@@ -181,15 +207,15 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
 
 
+    def show_meta_objects(self,box_2d_list,box_3d_list):
+        self.meta_2d_obj_list = []
+        self.meta_3d_obj_list = []
+        self.pic_meta = self.clear_pic()
 
-        # # self.black_board = cv2.cvtColor(self.black_board, cv2.COLOR_BGR2RGB)
-        # pic = QtGui.QImage(self.black_board, self.black_board.shape[1], self.black_board.shape[0],QImage.Format_RGB888)
-        # self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
+        if self.checkBox_OrgObj.isChecked():
+            self.meta_2d_obj_list = box_2d_list
+            self.meta_3d_obj_list = box_3d_list
 
-
-
-    def show_meta_objects(self):
-        pass
 
     def update_log_progress(self):
         self.timeSlider.setValue(self.readRadarLogFileThread.logFile.currLineNr)
@@ -408,19 +434,21 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         print('log folder path:', self.log_folder_path)
         os.makedirs(self.log_folder_path)
         self.orgRadarThread.radarLogFile = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_4D548, 'a')
-        self.metaThread.log_file = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_J3Camera, 'a')
+        if self.metaThread.record_file:
+            self.metaThread.log_file = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_J3Camera, 'a')
     @pyqtSlot()  ##播放
     def on_btnPlay_clicked(self):
         if self.isOnlineMode:  # 实时数据采集
             if self.isRunning:  # 如果正在运行，则暂停，并保存文件
                 self.orgRadarThread.pause()
-                self.metaThread.pause()
+                # self.metaThread.pause()
                 self.btnPlay.setIcon(self.iconPlay)
                 self.orgRadarThread.radarLogFile.close()
-                self.metaThread.log_file.close()
+                if self.metaThread.record_file:
+                    self.metaThread.log_file.close()
             else:  # 如果没有运行，则开始记录
                 self.creat_new_log_folde()
-                self.metaThread.resume()
+                # self.metaThread.resume()
                 self.orgRadarThread.resume()
                 self.btnPlay.setIcon(self.iconPause)
 

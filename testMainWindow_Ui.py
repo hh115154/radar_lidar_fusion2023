@@ -81,7 +81,7 @@ class Ui_MainWindow(object):
 
             # 创建复选框1，并默认选中，当状态改变时信号触发事件
             self.checkBox_pic = QCheckBox("图像")
-            self.checkBox_pic.setChecked(True)
+            self.checkBox_pic.setChecked(False)
 
             # 创建复选框，标记状态改变时信号触发事件
             self.checkBox_OrgObj = QCheckBox("目标")

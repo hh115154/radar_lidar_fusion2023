@@ -212,11 +212,12 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 
 
 class J3A_MetaData_RecvThd(BaseThread):
-	meta_3DBox_obj_signal = pyqtSignal(list)
+	meta_obj_list_ignal = pyqtSignal(list,list)
 	def __init__(self):
 		super(J3A_MetaData_RecvThd, self).__init__()
 		self.log_file = ''
 		self.socket = zmq_sub_client_socket(ConfigConstantData.J3A_socket_if)
+		self.record_file = False
 
 	def run(self) -> None:
 		while True:
@@ -227,21 +228,25 @@ class J3A_MetaData_RecvThd(BaseThread):
 			try:
 				recv_message = self.socket.client_socket.recv()
 
-				strData = recv_message.hex(' ') + '\n'
-				self.log_file.write(strData)
+				if self.record_file:
+					strData = recv_message.hex(' ') + '\n'
+					self.log_file.write(strData)
 
 				msg_len = len(recv_message)
 				if recv_message[0] == 8: # meta data
 					self.Meta = protobuf_if.Meta(recv_message)
 					print("frame_id is:", self.Meta.frame_id)
-					self.meta_3DBox_obj_signal.emit(self.Meta.obj3Dbox_list_draw)
+					self.meta_obj_list_ignal.emit(self.Meta.obj2Dbox_list, self.Meta.obj3Dbox_list)
+
 				elif recv_message[0] == 0:  # image info
-					print("1th long message len of %d"%msg_len)
+					pass
+					# print("1th long message len of %d"%msg_len)
 				elif recv_message[0] == 255:
-					if msg_len == 776:
-						print("3th long message len of 776")
-					else:
-						print("2th msg len of %d"%msg_len)
+					pass
+					# if msg_len == 776:
+					# 	print("3th long message len of 776")
+					# else:
+					# 	print("2th msg len of %d"%msg_len)
 
 
 			except Exception as e:

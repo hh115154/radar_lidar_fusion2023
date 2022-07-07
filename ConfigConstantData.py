@@ -29,3 +29,8 @@ logfile_tail_affix_4D548 = '.someip.ars540.hex'
 logfile_tail_affix_J3Camera = '.zmq.j3camera.hex'
 
 
+#pic info
+pic_width = 3840
+pic_height = 2160
+
+
