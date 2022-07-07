@@ -83,16 +83,17 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if ConfigConstantData.MachineType == ConfigConstantData.J3System:
             self.orgRadarThread.Radar2D_obj_signal.connect(self.radar408_2dBox_show)
             self.orgRadarThread.fused_objList_signal.connect(self.fused_obj_list_show)
+            self.orgRadarThread.start()
+            self.orgRadarThread.resume()
 
             self.metaThread = threadMngt.J3A_MetaData_RecvThd()
             self.metaThread.meta_obj_list_ignal.connect(self.show_meta_objects)
             self.metaThread.start()
             self.metaThread.resume()
 
-            self.timer_camera = QtCore.QTimer()  # 控制雷达的刷新频率
-            self.timer_camera.timeout.connect(self.multi_pic_show)
-            timer_ms = 100
-            self.timer_camera.start(timer_ms)
+            self.timer_sensor_show = QtCore.QTimer()  # 控制雷达的刷新频率
+            self.timer_sensor_show.timeout.connect(self.multi_pic_show)
+            self.timer_sensor_show.start(ConfigConstantData.timer_online_sensor_show_ms)
 
             self.pic_shape = (ConfigConstantData.pic_height, ConfigConstantData.pic_width,3)
             self.pic_org = np.zeros(self.pic_shape, dtype=np.uint8)
@@ -140,10 +141,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.fusion_2dBox_list = fused_2d_list
         self.fusion_3dBox_list = fused_3d_list
 
-
     def clear_pic(self):
         return np.zeros(self.pic_shape, dtype=np.uint8)
-
 
     def set_multi_pic_weight(self):
         if self.checkBox_pic.isChecked():
@@ -161,15 +160,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         else:
             self.weight_pic_fusion = 0
 
-
     def set_org_pic(self):
         self.pic_org = self.clear_pic()
         if self.checkBox_pic.isChecked():
             r, f = self.camera.read()
             if r:
                 self.pic_org = cv2.resize(f, (ConfigConstantData.pic_width, ConfigConstantData.pic_height))
-
-
 
     def set_meta_pic(self):
         self.pic_meta = self.clear_pic()
@@ -180,6 +176,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             for box_3d in self.meta_3d_obj_list:
                 box_3d.draw_to_pic(self.pic_meta)
 
+            # test code
             # box = presentationLayer.Box_2D(100.123,20.456,30.789,40.111)
             # box.set_color(presentationLayer.My_cv2_Color.Red)
             # box.set_text("hello")
@@ -190,8 +187,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             # box_3D.set_color(presentationLayer.My_cv2_Color.Red)
             # box_3D.set_text("hello 3D  box")
             # box_3D.draw_to_pic(self.pic_meta)
-
-
 
     def set_fusion_pic(self):
         self.pic_fusion = self.clear_pic()
@@ -208,9 +203,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             # box.set_text("fusion")
             # box.draw_to_pic(self.pic_fusion)
 
-
-
-
     def clear_lable(self):
         pic = np.zeros(self.pic_shape, dtype=np.uint8)
         pic = cv2.cvtColor(pic, cv2.COLOR_BGR2RGB)
@@ -222,17 +214,14 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.set_meta_pic()
         self.set_fusion_pic()
 
-
         self.clear_lable()
 
         pic = cv2.addWeighted(self.pic_org, self.weight_pic_org, self.pic_meta, self.weight_pic_meta, 0)
         pic = cv2.addWeighted(pic, 1, self.pic_fusion, self.weight_pic_fusion,  0)
 
-
         pic = cv2.cvtColor(pic, cv2.COLOR_BGR2RGB)
         pic = QtGui.QImage(pic.data, pic.shape[1], pic.shape[0],QImage.Format_RGB888)
         self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
-
 
     def show_meta_objects(self,box_2d_list,box_3d_list):
         self.meta_2d_obj_list = []
@@ -242,7 +231,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if self.checkBox_OrgObj.isChecked():
             self.meta_2d_obj_list = box_2d_list
             self.meta_3d_obj_list = box_3d_list
-
 
     def update_log_progress(self):
         self.timeSlider.setValue(self.readRadarLogFileThread.logFile.currLineNr)
@@ -285,7 +273,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.timeSlider.setDisabled(True)
         self.cb.setDisabled(False)
         self.btnOpen.setDisabled(True)
-
 
     def show_pcl(self, dict):
         self.GLView_OrgRadar.removePoints()
@@ -344,7 +331,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         value = QtCore.QVariant(val)
         self.model.setData(index, value)
 
-    def resume_logThread(self):
+    def resume_logThread(self):# 需要修改，在线接收时，不适用计时器恢复线程！！！！！！！！！！！！！！！
         if not self.isOnlineMode and self.isRunning:
             self.update_log_progress()
             self.readRadarLogFileThread.resume()
@@ -460,24 +447,32 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.log_folder_path = curPath + ConfigConstantData.picture_saved_path + sharedName
         print('log folder path:', self.log_folder_path)
         os.makedirs(self.log_folder_path)
-        self.orgRadarThread.radarLogFile = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_4D548, 'a')
-        if self.metaThread.record_file:
+        if ConfigConstantData.MachineType == ConfigConstantData.J3System:
             self.metaThread.log_file = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_J3Camera, 'a')
+            self.orgRadarThread.log_file = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_J3Fusion, 'a')
+            self.metaThread.bLoggingFile  = True
+        elif ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
+            self.orgRadarThread.log_file = open(self.log_folder_path + "/" + sharedName + ConfigConstantData.logfile_tail_affix_4D548, 'a')
+        self.orgRadarThread.bLoggingFile = True
+
     @pyqtSlot()  ##播放
     def on_btnPlay_clicked(self):
         if self.isOnlineMode:  # 实时数据采集
             if self.isRunning:  # 如果正在运行，则暂停，并保存文件
-                self.orgRadarThread.pause()
-                # self.metaThread.pause()
                 self.btnPlay.setIcon(self.iconPlay)
-                self.orgRadarThread.radarLogFile.close()
-                if self.metaThread.record_file:
-                    self.metaThread.log_file.close()
+                if self.orgRadarThread.bLoggingFile:
+                    self.orgRadarThread.bLoggingFile = False
+                    self.orgRadarThread.log_file.close()
+                if ConfigConstantData.MachineType == ConfigConstantData.J3System:
+                    if self.metaThread.bLoggingFile:
+                        self.metaThread.bLoggingFile = False
+                        self.metaThread.log_file.close()
+                self.timer_sensor_show.start(ConfigConstantData.timer_online_sensor_show_ms)
             else:  # 如果没有运行，则开始记录
                 self.creat_new_log_folde()
-                # self.metaThread.resume()
-                self.orgRadarThread.resume()
                 self.btnPlay.setIcon(self.iconPause)
+                # when write log file,slow down the timer to show sensor data
+                self.timer_sensor_show.start(ConfigConstantData.timer_online_sensor_show_and_log_ms)
 
         else:  # log文件读取
             if self.isRunning:

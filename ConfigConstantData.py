@@ -21,12 +21,15 @@ PclByteNr = 35336
 
 #time
 timer_readlogfile_ms = 50# 實際應該是50
+timer_online_sensor_show_ms = 100#
+timer_online_sensor_show_and_log_ms = 200#
 
 # log file and pic file
 picture_saved_path = '/myLogFolder/'
 logFile_head_affix = 'Record_'
 logfile_tail_affix_4D548 = '.someip.ars540.hex'
 logfile_tail_affix_J3Camera = '.zmq.j3camera.hex'
+logfile_tail_affix_J3Fusion = '.zmq.j3radar_fusion.hex'
 
 
 #pic info

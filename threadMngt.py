@@ -29,6 +29,12 @@ class BaseThread(QThread):
 		self.mutex = QMutex()
 		self.cond = QWaitCondition()
 		self._isPause = True
+		self.bLoggingFile = False
+		self.log_file = ''
+
+	def log_a_frame_to_file_as_a_line(self, frame):
+		strData = frame.hex(' ') + '\n'
+		self.log_file.write(strData)
 
 	def pause(self):
 		self._isPause = True
@@ -130,11 +136,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		self.timestamp = time.time()
 		self.presentationPCL = presentationLayer.Pcl_Color()
 		self.counter = 0
-		self.radarLogFile = 0
 
-	def log_a_frame_to_file_as_a_line(self, frame):
-		strData = frame.hex(' ') + '\n'
-		self.radarLogFile.write(strData)
 
 	def draw_obj(self,data_bytes):
 		self.counter +=1
@@ -168,7 +170,8 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 			# 	data = struct.unpack('>803B', recv_message)
 			# 	print("data len 803",data)
 			if ConfigConstantData.ObjListByteNr == len(recv_message):  # objects
-				self.log_a_frame_to_file_as_a_line(recv_message)
+				if self.bLoggingFile:
+					self.log_a_frame_to_file_as_a_line(recv_message)
 
 				data = struct.unpack('>9401B', recv_message)
 				bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.ObjListByteNr,
@@ -176,7 +179,8 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 				self.draw_obj(bytes_data)
 
 			elif ConfigConstantData.PclByteNr == len(recv_message):  # pcl
-				self.log_a_frame_to_file_as_a_line(recv_message)
+				if self.bLoggingFile:
+					self.log_a_frame_to_file_as_a_line(recv_message)
 
 				data = struct.unpack('>35336B', recv_message)
 				bytes_data = int.from_bytes(data, byteorder='big').to_bytes(ConfigConstantData.PclByteNr,
@@ -189,7 +193,8 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		try:
 			recv_message = self.socket.client_socket.recv()
 
-			self.log_a_frame_to_file_as_a_line(recv_message)
+			if self.bLoggingFile:
+				self.log_a_frame_to_file_as_a_line(recv_message)
 
 			self.Data = protobuf_if.All_Data(recv_message)
 			print("frame id",self.Data.frame_id)
@@ -217,9 +222,7 @@ class J3A_MetaData_RecvThd(BaseThread):
 	meta_obj_list_ignal = pyqtSignal(list,list)
 	def __init__(self):
 		super(J3A_MetaData_RecvThd, self).__init__()
-		self.log_file = ''
 		self.socket = zmq_sub_client_socket(ConfigConstantData.J3A_socket_if)
-		self.record_file = False
 
 	def run(self) -> None:
 		while True:
@@ -230,9 +233,8 @@ class J3A_MetaData_RecvThd(BaseThread):
 			try:
 				recv_message = self.socket.client_socket.recv()
 
-				if self.record_file:
-					strData = recv_message.hex(' ') + '\n'
-					self.log_file.write(strData)
+				if self.bLoggingFile:
+					self.log_a_frame_to_file_as_a_line(recv_message)
 
 				msg_len = len(recv_message)
 				if recv_message[0] == 8: # meta data
