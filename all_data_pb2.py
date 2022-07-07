@@ -18,7 +18,7 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='all_data.proto',
   package='AllData',
-  serialized_pb=_b('\n\x0e\x61ll_data.proto\x12\x07\x41llData\"\xdf\x02\n\x0bRadarObject\x12\x11\n\tobject_id\x18\x01 \x02(\x05\x12\x17\n\x0fobject_distlong\x18\x02 \x02(\x02\x12\x16\n\x0eobject_distlat\x18\x03 \x02(\x02\x12\x17\n\x0fobject_vrellong\x18\x04 \x02(\x02\x12\x16\n\x0eobject_vrellat\x18\x05 \x02(\x02\x12\x17\n\x0fobject_arellong\x18\x06 \x02(\x02\x12\x16\n\x0eobject_arellat\x18\x07 \x02(\x02\x12\x15\n\robject_length\x18\x08 \x02(\x02\x12\x14\n\x0cobject_width\x18\t \x02(\x02\x12\x1f\n\x17object_orientationangle\x18\n \x02(\x02\x12\x12\n\nobject_rcs\x18\x0b \x02(\x02\x12\x16\n\x0eobject_dynprop\x18\x0c \x02(\x05\x12\x1a\n\x12object_probofexist\x18\r \x02(\x05\x12\x14\n\x0cobject_class\x18\x0e \x02(\x05\"M\n\x0eStructureRadar\x12\x0f\n\x07num_obj\x18\x01 \x02(\x05\x12*\n\x0cradar_object\x18\x02 \x03(\x0b\x32\x14.AllData.RadarObject\"(\n\x05Point\x12\t\n\x01x\x18\x01 \x02(\x02\x12\t\n\x01y\x18\x02 \x02(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\".\n\x08Velocity\x12\n\n\x02vx\x18\x01 \x02(\x02\x12\n\n\x02vy\x18\x02 \x02(\x02\x12\n\n\x02vz\x18\x03 \x01(\x02\"2\n\x0c\x41\x63\x63\x65leration\x12\n\n\x02\x61x\x18\x01 \x02(\x02\x12\n\n\x02\x61y\x18\x02 \x02(\x02\x12\n\n\x02\x61z\x18\x03 \x01(\x02\"\xf0\x01\n\x0b\x46usedObject\x12\x10\n\x08track_id\x18\x01 \x02(\x05\x12\x0c\n\x04type\x18\x02 \x02(\x05\x12\x0c\n\x04\x63onf\x18\x03 \x01(\x05\x12\x11\n\tlife_time\x18\x04 \x01(\x05\x12\x0b\n\x03\x61ge\x18\x05 \x01(\x05\x12 \n\x08position\x18\x06 \x01(\x0b\x32\x0e.AllData.Point\x12\x0e\n\x06length\x18\x07 \x01(\x02\x12\r\n\x05width\x18\x08 \x01(\x02\x12\x0e\n\x06height\x18\t \x01(\x02\x12\x1e\n\x03vel\x18\n \x01(\x0b\x32\x11.AllData.Velocity\x12\"\n\x03\x61\x63\x63\x18\x0b \x01(\x0b\x32\x15.AllData.Acceleration\"N\n\x0fStructureFusion\x12\x0f\n\x07num_obj\x18\x01 \x02(\x05\x12*\n\x0c\x66used_object\x18\x02 \x03(\x0b\x32\x14.AllData.FusedObject\"~\n\x04\x44\x61ta\x12\x10\n\x08\x66rame_id\x18\x01 \x02(\x05\x12\x30\n\x0fstructure_radar\x18\x02 \x01(\x0b\x32\x17.AllData.StructureRadar\x12\x32\n\x10structure_fusion\x18\x03 \x01(\x0b\x32\x18.AllData.StructureFusion')
+  serialized_pb=_b('\n\x0e\x61ll_data.proto\x12\x07\x41llData\"\xdf\x02\n\x0bRadarObject\x12\x11\n\tobject_id\x18\x01 \x02(\x05\x12\x17\n\x0fobject_distlong\x18\x02 \x02(\x02\x12\x16\n\x0eobject_distlat\x18\x03 \x02(\x02\x12\x17\n\x0fobject_vrellong\x18\x04 \x02(\x02\x12\x16\n\x0eobject_vrellat\x18\x05 \x02(\x02\x12\x17\n\x0fobject_arellong\x18\x06 \x02(\x02\x12\x16\n\x0eobject_arellat\x18\x07 \x02(\x02\x12\x15\n\robject_length\x18\x08 \x02(\x02\x12\x14\n\x0cobject_width\x18\t \x02(\x02\x12\x1f\n\x17object_orientationangle\x18\n \x02(\x02\x12\x12\n\nobject_rcs\x18\x0b \x02(\x02\x12\x16\n\x0eobject_dynprop\x18\x0c \x02(\x05\x12\x1a\n\x12object_probofexist\x18\r \x02(\x05\x12\x14\n\x0cobject_class\x18\x0e \x02(\x05\"M\n\x0eStructureRadar\x12\x0f\n\x07num_obj\x18\x01 \x02(\x05\x12*\n\x0cradar_object\x18\x02 \x03(\x0b\x32\x14.AllData.RadarObject\"(\n\x05Point\x12\t\n\x01x\x18\x01 \x02(\x02\x12\t\n\x01y\x18\x02 \x02(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\".\n\x08Velocity\x12\n\n\x02vx\x18\x01 \x02(\x02\x12\n\n\x02vy\x18\x02 \x02(\x02\x12\n\n\x02vz\x18\x03 \x01(\x02\"2\n\x0c\x41\x63\x63\x65leration\x12\n\n\x02\x61x\x18\x01 \x02(\x02\x12\n\n\x02\x61y\x18\x02 \x02(\x02\x12\n\n\x02\x61z\x18\x03 \x01(\x02\"@\n\x04Rect\x12\x0c\n\x04left\x18\x01 \x02(\x02\x12\x0b\n\x03top\x18\x02 \x02(\x02\x12\r\n\x05right\x18\x03 \x02(\x02\x12\x0e\n\x06\x62ottom\x18\x04 \x02(\x02\"\x97\x02\n\x05\x42ox3D\x12 \n\x08lower_lt\x18\x01 \x02(\x0b\x32\x0e.AllData.Point\x12 \n\x08lower_lb\x18\x02 \x02(\x0b\x32\x0e.AllData.Point\x12 \n\x08lower_rb\x18\x03 \x02(\x0b\x32\x0e.AllData.Point\x12 \n\x08lower_rt\x18\x04 \x02(\x0b\x32\x0e.AllData.Point\x12 \n\x08upper_lt\x18\x05 \x02(\x0b\x32\x0e.AllData.Point\x12 \n\x08upper_lb\x18\x06 \x02(\x0b\x32\x0e.AllData.Point\x12 \n\x08upper_rb\x18\x07 \x02(\x0b\x32\x0e.AllData.Point\x12 \n\x08upper_rt\x18\x08 \x02(\x0b\x32\x0e.AllData.Point\"\xaa\x02\n\x0b\x46usedObject\x12\x10\n\x08track_id\x18\x01 \x02(\x05\x12\x0c\n\x04type\x18\x02 \x02(\x05\x12\x0c\n\x04\x63onf\x18\x03 \x01(\x05\x12\x11\n\tlife_time\x18\x04 \x01(\x05\x12\x0b\n\x03\x61ge\x18\x05 \x01(\x05\x12 \n\x08position\x18\x06 \x01(\x0b\x32\x0e.AllData.Point\x12\x0e\n\x06length\x18\x07 \x01(\x02\x12\r\n\x05width\x18\x08 \x01(\x02\x12\x0e\n\x06height\x18\t \x01(\x02\x12\x1e\n\x03vel\x18\n \x01(\x0b\x32\x11.AllData.Velocity\x12\"\n\x03\x61\x63\x63\x18\x0b \x01(\x0b\x32\x15.AllData.Acceleration\x12\x1b\n\x04rect\x18\x0c \x01(\x0b\x32\r.AllData.Rect\x12\x1b\n\x03\x62ox\x18\r \x01(\x0b\x32\x0e.AllData.Box3D\"N\n\x0fStructureFusion\x12\x0f\n\x07num_obj\x18\x01 \x02(\x05\x12*\n\x0c\x66used_object\x18\x02 \x03(\x0b\x32\x14.AllData.FusedObject\"~\n\x04\x44\x61ta\x12\x10\n\x08\x66rame_id\x18\x01 \x02(\x05\x12\x30\n\x0fstructure_radar\x18\x02 \x01(\x0b\x32\x17.AllData.StructureRadar\x12\x32\n\x10structure_fusion\x18\x03 \x01(\x0b\x32\x18.AllData.StructureFusion')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -315,6 +315,136 @@ _ACCELERATION = _descriptor.Descriptor(
 )
 
 
+_RECT = _descriptor.Descriptor(
+  name='Rect',
+  full_name='AllData.Rect',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='left', full_name='AllData.Rect.left', index=0,
+      number=1, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='top', full_name='AllData.Rect.top', index=1,
+      number=2, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='right', full_name='AllData.Rect.right', index=2,
+      number=3, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='bottom', full_name='AllData.Rect.bottom', index=3,
+      number=4, type=2, cpp_type=6, label=2,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=602,
+  serialized_end=666,
+)
+
+
+_BOX3D = _descriptor.Descriptor(
+  name='Box3D',
+  full_name='AllData.Box3D',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='lower_lt', full_name='AllData.Box3D.lower_lt', index=0,
+      number=1, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='lower_lb', full_name='AllData.Box3D.lower_lb', index=1,
+      number=2, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='lower_rb', full_name='AllData.Box3D.lower_rb', index=2,
+      number=3, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='lower_rt', full_name='AllData.Box3D.lower_rt', index=3,
+      number=4, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='upper_lt', full_name='AllData.Box3D.upper_lt', index=4,
+      number=5, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='upper_lb', full_name='AllData.Box3D.upper_lb', index=5,
+      number=6, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='upper_rb', full_name='AllData.Box3D.upper_rb', index=6,
+      number=7, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='upper_rt', full_name='AllData.Box3D.upper_rt', index=7,
+      number=8, type=11, cpp_type=10, label=2,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  options=None,
+  is_extendable=False,
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=669,
+  serialized_end=948,
+)
+
+
 _FUSEDOBJECT = _descriptor.Descriptor(
   name='FusedObject',
   full_name='AllData.FusedObject',
@@ -399,6 +529,20 @@ _FUSEDOBJECT = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
+    _descriptor.FieldDescriptor(
+      name='rect', full_name='AllData.FusedObject.rect', index=11,
+      number=12, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='box', full_name='AllData.FusedObject.box', index=12,
+      number=13, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
   ],
   extensions=[
   ],
@@ -410,8 +554,8 @@ _FUSEDOBJECT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=603,
-  serialized_end=843,
+  serialized_start=951,
+  serialized_end=1249,
 )
 
 
@@ -447,8 +591,8 @@ _STRUCTUREFUSION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=845,
-  serialized_end=923,
+  serialized_start=1251,
+  serialized_end=1329,
 )
 
 
@@ -491,14 +635,24 @@ _DATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=925,
-  serialized_end=1051,
+  serialized_start=1331,
+  serialized_end=1457,
 )
 
 _STRUCTURERADAR.fields_by_name['radar_object'].message_type = _RADAROBJECT
+_BOX3D.fields_by_name['lower_lt'].message_type = _POINT
+_BOX3D.fields_by_name['lower_lb'].message_type = _POINT
+_BOX3D.fields_by_name['lower_rb'].message_type = _POINT
+_BOX3D.fields_by_name['lower_rt'].message_type = _POINT
+_BOX3D.fields_by_name['upper_lt'].message_type = _POINT
+_BOX3D.fields_by_name['upper_lb'].message_type = _POINT
+_BOX3D.fields_by_name['upper_rb'].message_type = _POINT
+_BOX3D.fields_by_name['upper_rt'].message_type = _POINT
 _FUSEDOBJECT.fields_by_name['position'].message_type = _POINT
 _FUSEDOBJECT.fields_by_name['vel'].message_type = _VELOCITY
 _FUSEDOBJECT.fields_by_name['acc'].message_type = _ACCELERATION
+_FUSEDOBJECT.fields_by_name['rect'].message_type = _RECT
+_FUSEDOBJECT.fields_by_name['box'].message_type = _BOX3D
 _STRUCTUREFUSION.fields_by_name['fused_object'].message_type = _FUSEDOBJECT
 _DATA.fields_by_name['structure_radar'].message_type = _STRUCTURERADAR
 _DATA.fields_by_name['structure_fusion'].message_type = _STRUCTUREFUSION
@@ -507,6 +661,8 @@ DESCRIPTOR.message_types_by_name['StructureRadar'] = _STRUCTURERADAR
 DESCRIPTOR.message_types_by_name['Point'] = _POINT
 DESCRIPTOR.message_types_by_name['Velocity'] = _VELOCITY
 DESCRIPTOR.message_types_by_name['Acceleration'] = _ACCELERATION
+DESCRIPTOR.message_types_by_name['Rect'] = _RECT
+DESCRIPTOR.message_types_by_name['Box3D'] = _BOX3D
 DESCRIPTOR.message_types_by_name['FusedObject'] = _FUSEDOBJECT
 DESCRIPTOR.message_types_by_name['StructureFusion'] = _STRUCTUREFUSION
 DESCRIPTOR.message_types_by_name['Data'] = _DATA
@@ -545,6 +701,20 @@ Acceleration = _reflection.GeneratedProtocolMessageType('Acceleration', (_messag
   # @@protoc_insertion_point(class_scope:AllData.Acceleration)
   ))
 _sym_db.RegisterMessage(Acceleration)
+
+Rect = _reflection.GeneratedProtocolMessageType('Rect', (_message.Message,), dict(
+  DESCRIPTOR = _RECT,
+  __module__ = 'all_data_pb2'
+  # @@protoc_insertion_point(class_scope:AllData.Rect)
+  ))
+_sym_db.RegisterMessage(Rect)
+
+Box3D = _reflection.GeneratedProtocolMessageType('Box3D', (_message.Message,), dict(
+  DESCRIPTOR = _BOX3D,
+  __module__ = 'all_data_pb2'
+  # @@protoc_insertion_point(class_scope:AllData.Box3D)
+  ))
+_sym_db.RegisterMessage(Box3D)
 
 FusedObject = _reflection.GeneratedProtocolMessageType('FusedObject', (_message.Message,), dict(
   DESCRIPTOR = _FUSEDOBJECT,
