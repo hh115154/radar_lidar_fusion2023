@@ -168,6 +168,10 @@ class Box_2D(obj_shape):
         self.width = int(width)
 
     def draw_to_pic(self, pic):
+        cv2.rectangle(pic, (self.x, self.y), (self.x + self.length, self.y + self.width), self.color, self.pen_size)  # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
+        cv2.putText(pic, self.text, (self.x, self.y - 10), cv2.FONT_HERSHEY_PLAIN, self.font_size, self.color, self.pen_size)  # 画面，文本内容，位置
+
+
         # # b_box 左上角坐标
         # ptLeftTop = np.array([self.x, self.y])
         # # 文本框左上角坐标
@@ -189,8 +193,6 @@ class Box_2D(obj_shape):
         # cv2.putText(pic, self.text, tuple(ptLeftTop), cv2.FONT_HERSHEY_PLAIN, 2, de_color, self.pen_size)
 
 
-        cv2.rectangle(pic, (self.x, self.y), (self.x + self.length, self.y + self.width), self.color, self.pen_size)  # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
-        cv2.putText(pic, self.text, (self.x, self.y - 10), cv2.FONT_HERSHEY_PLAIN, self.font_size, self.color, self.pen_size)  # 画面，文本内容，位置
 
 class Box_3D(obj_shape):
 

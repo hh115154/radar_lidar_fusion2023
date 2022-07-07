@@ -98,14 +98,14 @@ class Meta:
 
                 if box.conf>0:
                     points = []
-                    points.append((box.upper_lb.x, box.upper_lb.y))
-                    points.append((box.upper_rb.x, box.upper_rb.y))
-                    points.append((box.upper_rt.x, box.upper_rt.y))
-                    points.append((box.upper_lt.x, box.upper_lt.y))
-                    points.append((box.lower_lb.x, box.lower_lb.y))
-                    points.append((box.lower_rb.x, box.lower_rb.y))
-                    points.append((box.lower_rt.x, box.lower_rt.y))
-                    points.append((box.lower_lt.x, box.lower_lt.y))
+                    points.append((int(box.upper_lb.x), int(box.upper_lb.y)))
+                    points.append((int(box.upper_rb.x), int(box.upper_rb.y)))
+                    points.append((int(box.upper_rt.x), int(box.upper_rt.y)))
+                    points.append((int(box.upper_lt.x), int(box.upper_lt.y)))
+                    points.append((int(box.lower_lb.x), int(box.lower_lb.y)))
+                    points.append((int(box.lower_rb.x), int(box.lower_rb.y)))
+                    points.append((int(box.lower_rt.x), int(box.lower_rt.y)))
+                    points.append((int(box.lower_lt.x), int(box.lower_lt.y)))
                     box_3d = presentationLayer.Box_3D(points=points)
                     box_3d.set_text("id:%d" % obstacle.id)
                     box_3d.set_color(presentationLayer.My_cv2_Color.Green)
