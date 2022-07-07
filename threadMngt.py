@@ -115,6 +115,8 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 	orgRadar_pcl_signal = pyqtSignal(dict)
 	orgRadar_obj_signal = pyqtSignal(list)
 	orgRadar_objInfo_signal = pyqtSignal(list)
+	Radar2D_obj_signal = pyqtSignal(list)
+	fused_objList_signal = pyqtSignal(list,list)
 	def __init__(self):
 		super(OriginalRadarThread, self).__init__()
 
@@ -191,8 +193,8 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 
 			self.Data = protobuf_if.All_Data(recv_message)
 			print("frame id",self.Data.frame_id)
-			objPresentations = self.Data.radar_obj_list_draw + self.Data.fused_obj_list_draw
-			self.orgRadar_obj_signal.emit(objPresentations)
+			self.Radar2D_obj_signal.emit(self.Data.radar_obj_list_draw)
+			self.fused_objList_signal.emit(self.Data.fused_obj_box2D,self.Data.fused_obj_box3D)
 		except Exception as e:
 			print('oranginal radar thread error:',e)
 

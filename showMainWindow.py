@@ -78,8 +78,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread = None
 
         self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # QCamera对象
+        self.orgRadarThread = threadMngt.OriginalRadarThread()
 
         if ConfigConstantData.MachineType == ConfigConstantData.J3System:
+            self.orgRadarThread.Radar2D_obj_signal.connect(self.radar408_2dBox_show)
+            self.orgRadarThread.fused_objList_signal.connect(self.fused_obj_list_show)
+
             self.metaThread = threadMngt.J3A_MetaData_RecvThd()
             self.metaThread.meta_obj_list_ignal.connect(self.show_meta_objects)
             self.metaThread.start()
@@ -108,6 +112,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.meta_2d_obj_list = []
             self.meta_3d_obj_list = []
 
+            self.radar_2dBox_list = []
+            self.fusion_2dBox_list = []
+            self.fusion_3dBox_list= []
+
         elif ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
 
 
@@ -116,11 +124,23 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.timer_radar.timeout.connect(self.resume_logThread)
             self.timer_radar.start(self.radar_timer_step)
 
-            self.orgRadarThread = threadMngt.OriginalRadarThread()
+
             self.orgRadarThread.orgRadar_pcl_signal.connect(self.show_pcl)  # 仿真文件数据
             self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
             self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
             self.orgRadarThread.start()
+
+    def radar408_2dBox_show(self, radar_2dBox_list):
+        self.radar_2dBox_list = []
+        self.radar_2dBox_list = radar_2dBox_list
+
+    def fused_obj_list_show(self, fused_2d_list,fused_3d_list):
+        self.fusion_2dBox_list = []
+        self.fusion_3dBox_list = []
+        self.fusion_2dBox_list = fused_2d_list
+        self.fusion_3dBox_list = fused_3d_list
+
+
     def clear_pic(self):
         return np.zeros(self.pic_shape, dtype=np.uint8)
 
@@ -176,11 +196,18 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def set_fusion_pic(self):
         self.pic_fusion = self.clear_pic()
         if self.checkBox_Fusion.isChecked():
+            for box_2d in self.fusion_2dBox_list:
+                box_2d.draw_to_pic(self.pic_fusion)
+            for box_3d in self.fusion_3dBox_list:
+                box_3d.draw_to_pic(self.pic_fusion)
+            for box_2d in self.radar_2dBox_list:
+                box_2d.draw_to_pic(self.pic_fusion)
+
             # box = presentationLayer.Box_2D(100,2000,30,40)
             # box.set_color(presentationLayer.My_cv2_Color.Green)
             # box.set_text("fusion")
             # box.draw_to_pic(self.pic_fusion)
-            pass
+
 
 
 

@@ -5,15 +5,18 @@ __author__ = 'Yang Hongxu'
 # @File     : protobuf_if.py
 # @Project  : radar_fusion
 import ConfigConstantData
+import Radar_vcs2pixel
 import presentationLayer
 import all_data_pb2
 import meta_pb2
+import Radar_vcs2pixel
 
 class All_Data:
     def __init__(self, all_data_buf):
         all_data = all_data_pb2.Data()
         all_data.ParseFromString(all_data_buf)
         self.frame_id = all_data.frame_id
+        self.obj_color = presentationLayer.My_cv2_Color.Green
         self.radar_obj_list = all_data.structure_radar.radar_object
         self.redar_obj_cntr = all_data.structure_radar.num_obj
 
@@ -21,43 +24,70 @@ class All_Data:
         self.fused_obj_cntr = all_data.structure_fusion.num_obj
 
         self.radar_obj_list_draw = self.get_radar_object_draw_list()
-        self.fused_obj_list_draw = self.get_fused_object_draw_list()
+        self.fused_obj_box2D, self.fused_obj_box3D = self.get_fused_object_draw_list()
 
     def get_radar_object_draw_list(self):
         radar_obj_list_draw = []
         for i in range(self.redar_obj_cntr):
             radar_obj = self.radar_obj_list[i]
-            obj_draw_info = presentationLayer.MyCuboid(width=radar_obj.width, length=radar_obj.length,
-                                                       x=radar_obj.object_distlong, y=radar_obj.object_distlat,z=0,
-                                                       _type=radar_obj.object_class,
-                                                       _id=radar_obj.object_id,
-                                                       _stMovement=0,  # ?
-                                                       _probability=0,
-                                                       _absV_x=radar_obj.object_vrellong,
-                                                       _absV_y=radar_obj.object_vrelat)
-            obj_draw_info.setHight(0)
-            radar_obj_list_draw.append(obj_draw_info)
+            world_info_distlong = radar_obj.object_distlong
+            world_info_distlat = radar_obj.object_distlat
 
+            x,y = Radar_vcs2pixel.vcs2pixel(world_info_distlong, world_info_distlat)
+            length = radar_obj.length
+            width = radar_obj.width
+            x = x - length/2
+            y = y - width/2
+            id = radar_obj.object_id
+            box_2d = presentationLayer.Box_2D(x, y, length, width)
+            box_2d.set_text('radar obj id'+str(id))
+            box_2d.set_text(self.obj_color)
+            radar_obj_list_draw.append(box_2d)
 
         return radar_obj_list_draw
 
     def get_fused_object_draw_list(self):
-        fused_obj_list_draw = []
+        fused_2dBox_lit = []
+        fused_3dBox_lit = []
         for i in range(self.fused_obj_cntr):
             fused_obj = self.fused_obj_list[i]
-            obj_draw_info = presentationLayer.MyCuboid(width=fused_obj.width, length=fused_obj.length,
-                                                       x=fused_obj.position.x, y=fused_obj.position.y,
-                                                       z=fused_obj.position.z,
-                                                       _type=fused_obj.type,
-                                                       _id=fused_obj.track_id,
-                                                       _stMovement=0,  # ?
-                                                       _probability=fused_obj.fused_obj.conf,
-                                                       _absV_x=fused_obj.vel.vx,
-                                                       _absV_y=fused_obj.vel.vy)
-            obj_draw_info.setHight(fused_obj.height)
-            fused_obj_list_draw.append(obj_draw_info)
+            id = fused_obj.track_id
+            type = fused_obj.type
+            conf = fused_obj.conf
+            length = fused_obj.length
+            width = fused_obj.width
+            height = fused_obj.height
+            velocity = fused_obj.vel
+            acceleration = fused_obj.acc
 
-        return fused_obj_list_draw
+
+            x0 = fused_obj.rect.left
+            y0 = fused_obj.rect.top
+            x1 = fused_obj.rect.right
+            y1 = fused_obj.rect.bottom
+            box_2d = presentationLayer.Box_2D(x0, y0, x1-x0, y1-y0)
+            box_2d.set_text('fused obj id:'+str(id) + ' , type:'+str(type) + ',  conf:'+str(conf))
+            box_2d.set_color(self.obj_color)
+            fused_2dBox_lit.append(box_2d)
+
+            if conf>0:
+                box = fused_obj.box
+                points=[]
+                points.append((int(box.upper_lb.x), int(box.upper_lb.y)))
+                points.append((int(box.upper_rb.x), int(box.upper_rb.y)))
+                points.append((int(box.upper_rt.x), int(box.upper_rt.y)))
+                points.append((int(box.upper_lt.x), int(box.upper_lt.y)))
+                points.append((int(box.lower_lb.x), int(box.lower_lb.y)))
+                points.append((int(box.lower_rb.x), int(box.lower_rb.y)))
+                points.append((int(box.lower_rt.x), int(box.lower_rt.y)))
+                points.append((int(box.lower_lt.x), int(box.lower_lt.y)))
+
+                box_3d = presentationLayer.Box_3D(points=points)
+                box_3d.set_text("id:%d" % id)
+                box_3d.set_color(self.obj_color)
+                fused_3dBox_lit.append(box_3d)
+
+        return fused_2dBox_lit, fused_3dBox_lit
 
 
 class Meta:
@@ -67,6 +97,8 @@ class Meta:
         self.frame_id = meta.frame_id
         self.version = meta.version
         self.meta_data = meta.data
+
+        self.obj_color = presentationLayer.My_cv2_Color.Red
 
         self.obj2Dbox_list,self.obj3Dbox_list = self.get_3DBox_draw_List()
     def b_3D_pos_valid(self, left, right, top, bottom):
@@ -93,7 +125,7 @@ class Meta:
                     width = rect.bottom - rect.top
                     box_2d = presentationLayer.Box_2D(x=x, y=y, length=length, width=width)
                     box_2d.set_text("id:%d" % obstacle.id)
-                    box_2d.set_color(presentationLayer.My_cv2_Color.Red)
+                    box_2d.set_color(self.obj_color)
                     box_2d_list.append(box_2d)
 
                 if box.conf>0:
@@ -108,7 +140,7 @@ class Meta:
                     points.append((int(box.lower_lt.x), int(box.lower_lt.y)))
                     box_3d = presentationLayer.Box_3D(points=points)
                     box_3d.set_text("id:%d" % obstacle.id)
-                    box_3d.set_color(presentationLayer.My_cv2_Color.Green)
+                    box_3d.set_color(self.obj_color)
                     box_3d_list.append(box_3d)
 
         print('mata 3D box conter is:', len(box_3d_list))
