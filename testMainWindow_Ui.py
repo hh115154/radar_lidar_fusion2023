@@ -72,7 +72,7 @@ class Ui_MainWindow(object):
             #用于显示多层图片的lable
             self.lable_main = QtWidgets.QLabel()
             self.lable_main.setScaledContents(True)
-            self.lable_main.setFixedSize(1127, 845)
+            self.lable_main.setFixedSize(1260, 720)
             objControl = self.lable_main
 
             # 创建一个GroupBox组

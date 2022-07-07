@@ -196,7 +196,6 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 		except Exception as e:
 			print('oranginal radar thread error:',e)
 
-
 	def run(self) -> None:
 		while True:
 			self.mutex.lock()

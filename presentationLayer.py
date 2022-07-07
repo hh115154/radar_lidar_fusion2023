@@ -7,6 +7,7 @@ from enum import Enum
 from PyQt5 import QtGui
 from ctypes import *
 import ctypes
+import cv2
 
 class Pcl_Color():
     def __init__(self):
@@ -126,7 +127,48 @@ class MyCuboid(BaseObject):
     def setHight(self, hight):
         self.height = hight
 
+class My_cv2_Color():
+    White = (255, 255, 255)
+    Black = (0, 0, 0)
+    Red = (0, 0, 255)
+    Green = (0, 255, 0)
+    Blue = (255, 0, 0)
+    Yellow = (0, 255, 255)
+    Cyan = ( 255, 255, 0)
+    Magenta = (255, 0, 255)
+    Orange = (0, 128, 255)
 
+
+class Box_2D:
+    def __init__(self, x, y, length, width, color=My_cv2_Color.White, pen_size=3,text=''):
+        self.x = x
+        self.y = y
+        self.length = length
+        self.width = width
+        self.color = color
+        self.pen_size = pen_size
+        self.text = text
+
+    def set_text(self,text):
+        self.text = text
+
+
+    def set_color(self, color):
+        self.color = color
+
+    def draw_to_pic(self, pic):
+        cv2.rectangle(pic, (self.x, self.y), (self.x + self.length, self.y + self.width), self.color, self.pen_size)  # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
+        cv2.putText(pic, self.text, (self.x, self.y - 10), cv2.FONT_HERSHEY_PLAIN, 2, self.color, self.pen_size)  # 画面，文本内容，位置
+
+
+
+class Text_Lable:
+    def __init__(self, x, y, text, color=My_cv2_Color.White, font_size=1):
+        self.x = x
+        self.y = y
+        self.text = text
+        self.color = color
+        self.font_size = font_size
 
 
 

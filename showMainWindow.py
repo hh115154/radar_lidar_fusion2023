@@ -6,6 +6,8 @@ from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog
 import sys
 import os.path
+
+import presentationLayer
 import testMainWindow_Ui
 import time
 import mySocket
@@ -87,11 +89,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.timer_camera.start(timer_ms)
 
 
-            pic_shape = (480, 640, 3)
-            self.black_board = np.zeros(pic_shape, dtype=np.uint8)  # 黑色画布
-            self.pic_org = self.black_board
-            self.pic_meta = self.black_board
-            self.pic_fusion = self.black_board
+            self.pic_shape = ( 2160,3840,3)
+            self.pic_org = np.zeros(self.pic_shape, dtype=np.uint8)
+            self.pic_meta = np.zeros(self.pic_shape, dtype=np.uint8)
+            self.pic_fusion = np.zeros(self.pic_shape, dtype=np.uint8)
+
+
 
             self.checkBox_pic.stateChanged.connect(self.set_multi_pic_weight)
             self.checkBox_OrgObj.stateChanged.connect(self.set_multi_pic_weight)
@@ -113,6 +116,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
             self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
             self.orgRadarThread.start()
+    def clear_pic(self,pic):
+        pic = np.zeros(self.pic_shape, dtype=np.uint8)
+
+
     def set_multi_pic_weight(self):
         if self.checkBox_pic.isChecked():
             self.weight_pic_org = 1
@@ -134,33 +141,28 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if self.checkBox_pic.isChecked():
             r, f = self.camera.read()
             if r:
-                self.pic_org = f
+                self.pic_org =  cv2.resize(f, (3840, 2160))
         else:
-            self.pic_org = self.black_board
+            self.clear_pic(self.pic_org)
 
     def set_meta_pic(self):
         if self.checkBox_OrgObj.isChecked():
-            x = 10
-            y = 20
-            w = 30
-            h = 40
-            class_name = 'test text'
-            cv2.rectangle(self.pic_meta, (x, y), (x + w, y + h), (128, 42, 42), 1)  # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
-            cv2.putText(self.pic_meta, class_name, (x, y - 10), cv2.FONT_HERSHEY_PLAIN, 2, (128, 42, 42), 1)  # 画面，文本内容，位置
+            box = presentationLayer.Box_2D(100,20,30,40)
+            box.set_color(presentationLayer.My_cv2_Color.Red)
+            box.set_text("hello")
+            box.draw_to_pic(self.pic_meta)
         else:
-            self.pic_meta = self.black_board
+            self.clear_pic(self.pic_meta)
 
     def set_fusion_pic(self):
         if self.checkBox_Fusion.isChecked():
-            x = 100
-            y = 200
-            w = 30
-            h = 40
-            class_name = 'test aaa'
-            cv2.rectangle(self.pic_fusion, (x, y), (x + w, y + h), (128, 42, 42), 1)  # 画面，左上角坐标，右下角坐标，RGB颜色，厚度
-            cv2.putText(self.pic_fusion, class_name, (x, y - 10), cv2.FONT_HERSHEY_PLAIN, 2, (128, 42, 42),1)  # 画面，文本内容，位置
+            box = presentationLayer.Box_2D(100,2000,30,40)
+            box.set_color(presentationLayer.My_cv2_Color.Green)
+            box.set_text("fusion")
+            box.draw_to_pic(self.pic_fusion)
+
         else:
-            self.pic_fusion = self.black_board
+            self.clear_pic(self.pic_fusion)
 
 
 
