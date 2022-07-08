@@ -18,6 +18,7 @@ import procAsamMdf
 import logFileMngt
 import ConfigConstantData
 import protobuf_if
+from datetime import datetime
 
 
 import all_data_pb2
@@ -35,6 +36,7 @@ class BaseThread(QThread):
 		self.log_file = ''
 		self.mark_line_id = 0
 		self.todo_mark = False
+
 
 
 	def mark_a_line_of_frameInfo(self):
@@ -206,9 +208,12 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 			self.log_this_frame = self.bLoggingFile # log all frames received if logging
 			self.Data = protobuf_if.All_Data(self.recv_message)
 
-			self.Radar2D_obj_signal.emit(self.Data.radar_obj_list_draw)
+			if len(self.Data.radar_obj_list_draw) > 0:# 使用有效数据更新视图数据
+				self.Radar2D_obj_signal.emit(self.Data.radar_obj_list_draw)
 
-			self.fused_objList_signal.emit(self.Data.fused_obj_box2D,self.Data.fused_obj_box3D)
+			if len(self.Data.fused_obj_box2D) > 0:
+				self.fused_objList_signal.emit(self.Data.fused_obj_box2D,self.Data.fused_obj_box3D)
+
 
 		except Exception as e:
 			print('oranginal radar thread error:',e)
