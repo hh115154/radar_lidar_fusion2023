@@ -38,24 +38,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.setupUi(self)
         self.testCntr = 0
 
-        # table
-        self.model = QtGui.QStandardItemModel(15, 15)
-        self.model.setVerticalHeaderLabels(['u_ID',
-                                            'u_Position_X',
-                                            'u_Position_Y',
-                                            'u_Position_Z',
-                                            'u_Existence_Probability',
-                                            'u_Classification_Car',
-                                            'u_Classification_Truck',
-                                            'u_Classification_Motorcycle',
-                                            'u_Classification_Bicycle',
-                                            'u_Classification_Pedestrian',
-                                            'u_Classification_Animal',
-                                            'u_Classification_Hazard',
-                                            'u_Classification_Unknown',
-                                            'u_Shape_Length_Edge_Mean',
-                                            'u_Shape_Width_Edge_Mean'])
-        self.tableView.setModel(self.model)
+
 
 
         # 快进
@@ -118,7 +101,24 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.fusion_3dBox_list= []
 
         elif ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
-
+            # table
+            self.model = QtGui.QStandardItemModel(15, 15)
+            self.model.setVerticalHeaderLabels(['u_ID',
+                                                'u_Position_X',
+                                                'u_Position_Y',
+                                                'u_Position_Z',
+                                                'u_Existence_Probability',
+                                                'u_Classification_Car',
+                                                'u_Classification_Truck',
+                                                'u_Classification_Motorcycle',
+                                                'u_Classification_Bicycle',
+                                                'u_Classification_Pedestrian',
+                                                'u_Classification_Animal',
+                                                'u_Classification_Hazard',
+                                                'u_Classification_Unknown',
+                                                'u_Shape_Length_Edge_Mean',
+                                                'u_Shape_Width_Edge_Mean'])
+            self.tableView.setModel(self.model)
 
             self.radar_timer_step = ConfigConstantData.timer_readlogfile_ms
             self.timer_radar = QtCore.QTimer()  # 控制雷达的刷新频率

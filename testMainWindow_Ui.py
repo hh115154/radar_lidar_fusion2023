@@ -24,7 +24,7 @@ import ConfigConstantData
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1160, 613)
+        # MainWindow.resize(1160, 613)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("./images/logo.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -32,17 +32,21 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         MainWindow.setCentralWidget(self.centralwidget)
 
-        # 主分隔条，左右分隔
-        self.splitter_org_obj = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        # 主垂直布局
+        self.base_verticalLayout = QtWidgets.QVBoxLayout()
 
-        # 竖向第二条分割拖动条
-        self.splitter_glview_table = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-
+        # 嵌套一层垂直布局
+        play_area_verticalLayout = QtWidgets.QVBoxLayout()
 
         # 最下面的水平布局，存放几个按钮
         btns_area_horizontallayout = QtWidgets.QHBoxLayout()
 
         if ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
+            # 主分隔条，左右分隔
+            self.splitter_org_obj = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+            # 竖向第二条分割拖动条
+            self.splitter_glview_table = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+
             #left
             self.splitter_vedio_pcl = QtWidgets.QSplitter(QtCore.Qt.Vertical)
 
@@ -65,19 +69,36 @@ class Ui_MainWindow(object):
             self.GLView_FuseRadar = myControls.MyGLViewWidget()
             self.GLView_FuseRadar.setCameraPosition(elevation=90)
             self.GLView_FuseRadar.setCameraParams(fov=90)
-            objControl = self.GLView_FuseRadar
+
+            # 纵向第二个分隔条左边放大3D空间控件
+            self.splitter_glview_table.addWidget(self.GLView_FuseRadar)
+
+
+            self.tableView = QtWidgets.QTableView()
+            # 水平方向标签拓展剩下的窗口部分，填满表格
+            self.tableView.horizontalHeader().setStretchLastSection(True)
+            # 水平方向，表格大小拓展到适当的尺寸
+            self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
+            self.tableView.verticalHeader().setDefaultSectionSize(38)
+            self.splitter_glview_table.addWidget(self.tableView)
+
+            # 主分隔条右侧先放一个分给条
+            self.splitter_org_obj.addWidget(self.splitter_glview_table)
+
+            self.base_verticalLayout.addWidget(self.splitter_org_obj)
 
         elif ConfigConstantData.MachineType == ConfigConstantData.J3System:
 
             #用于显示多层图片的lable
             self.lable_main = QtWidgets.QLabel()
             self.lable_main.setScaledContents(True)
-            self.lable_main.setFixedSize(1260, 720)
-            objControl = self.lable_main
+            self.lable_main.setFixedSize(QtCore.QSize(1900,900))
 
-            # 创建一个GroupBox组
-            self.groupBox = QGroupBox("图层选项")
-            self.groupBox.setFlat(False)
+            play_area_verticalLayout.addWidget(self.lable_main)
+
+            # # 创建一个GroupBox组
+            # self.groupBox = QGroupBox("图层选项")
+            # self.groupBox.setFlat(False)
 
             # 创建复选框1，并默认选中，当状态改变时信号触发事件
             self.checkBox_pic = QCheckBox("图像")
@@ -91,33 +112,15 @@ class Ui_MainWindow(object):
             self.checkBox_Fusion = QCheckBox("融合")
             self.checkBox_Fusion.setChecked(True)
 
-
             self.checkBox_layout = QtWidgets.QHBoxLayout()
             self.checkBox_layout.addWidget(self.checkBox_pic)
             self.checkBox_layout.addWidget(self.checkBox_OrgObj)
             self.checkBox_layout.addWidget(self.checkBox_Fusion)
-            self.groupBox.setLayout(self.checkBox_layout)
+            # self.groupBox.setLayout(self.checkBox_layout)
 
-            btns_area_horizontallayout.addWidget(self.groupBox)
-
-        self.splitter_glview_table.addWidget(objControl)
-
-        self.tableView = QtWidgets.QTableView()
-        # 水平方向标签拓展剩下的窗口部分，填满表格
-        self.tableView.horizontalHeader().setStretchLastSection(True)
-        # 水平方向，表格大小拓展到适当的尺寸
-        self.tableView.horizontalHeader().setSectionResizeMode( QtWidgets.QHeaderView.Interactive)
-        self.tableView.verticalHeader().setDefaultSectionSize(38)
-        self.splitter_glview_table.addWidget(self.tableView)
-
-        # 主分隔条右侧先放一个分给条
-        self.splitter_org_obj.addWidget(self.splitter_glview_table)
+            btns_area_horizontallayout.addLayout(self.checkBox_layout)
 
 
-        self.base_verticalLayout = QtWidgets.QVBoxLayout()
-        self.base_verticalLayout.addWidget(self.splitter_org_obj)
-
-        play_area_verticalLayout = QtWidgets.QVBoxLayout()
         self.timeSlider = myControls.JumpSlider()
         self.timeSlider.setTracking(True)
         self.timeSlider.setTickPosition(QtWidgets.QSlider.TicksAbove)
@@ -125,7 +128,7 @@ class Ui_MainWindow(object):
         self.timeSlider.setObjectName("timeSlider")
 
         play_area_verticalLayout.addWidget(self.timeSlider)
-
+        play_area_verticalLayout.addLayout(btns_area_horizontallayout)
 
 
         self.fileName = QtWidgets.QLabel("无文件")
@@ -193,7 +196,7 @@ class Ui_MainWindow(object):
         btns_area_horizontallayout.addWidget(self.LabRatio)
         btns_area_horizontallayout.addWidget(self.LabTotal)
 
-        play_area_verticalLayout.addLayout(btns_area_horizontallayout)
+
         self.base_verticalLayout.addLayout(play_area_verticalLayout)
         self.base_verticalLayout.setStretch(0,1)
 
@@ -204,9 +207,9 @@ class Ui_MainWindow(object):
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1160, 26))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
+        # self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        # self.statusbar.setObjectName("statusbar")
+        # MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
