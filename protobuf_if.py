@@ -11,6 +11,21 @@ import all_data_pb2
 import meta_pb2
 import Radar_vcs2pixel
 
+map_color2String = {
+    0 : 'vehicle',
+    1: 'pedestrian',
+    2: 'cycle'
+}
+
+def get_typestr_by_type(type):
+    # 判断是否存在map
+    str = ''
+    if type in map_color2String:
+     str =  map_color2String[type]
+    else:
+        str = 'unknown'
+    return str
+
 class All_Data:
     def __init__(self, all_data_buf):
         all_data = all_data_pb2.Data()
@@ -66,7 +81,7 @@ class All_Data:
             x1 = fused_obj.rect.right
             y1 = fused_obj.rect.bottom
             box_2d = presentationLayer.Box_2D(x0, y0, x1-x0, y1-y0)
-            box_2d.set_text('fused obj id:'+str(id) + ' , type:'+str(type) + ',  conf:'+str(conf))
+            box_2d.set_text('fused obj id:'+str(id) + ' , type:'+get_typestr_by_type(type) + ',  conf:'+str(conf))
             box_2d.set_color(self.obj_color)
             fused_2dBox_lit.append(box_2d)
 
@@ -82,7 +97,7 @@ class All_Data:
                 points.append((int(box.lower_rt.x), int(box.lower_rt.y)))
                 points.append((int(box.lower_lt.x), int(box.lower_lt.y)))
 
-                box_3d = presentationLayer.Box_3D(points=points)
+                box_3d = presentationLayer.Box_3D(points)
                 box_3d.set_text("id:%d" % id)
                 box_3d.set_color(self.obj_color)
                 fused_3dBox_lit.append(box_3d)
