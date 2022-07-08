@@ -1,29 +1,46 @@
-import numpy as np
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
-import pyqtgraph.opengl as gl
-plot = pg.plot()
-plot.setAspectLocked()
+import sys
+from PyQt5.QtWidgets import *
 
-# Add polar grid lines
-plot.addLine(x=0, pen=0.2)
-plot.addLine(y=0, pen=0.2)
-for r in range(2, 20, 2):
-    circle = pg.QtGui.QGraphicsEllipseItem(-r, -r, r * 2, r * 2)
-    circle.setPen(pg.mkPen(0.2))
-    plot.addItem(circle)
+class QStackedWidgetDemo(QMainWindow):
+    def __init__(self):
+        super(QStackedWidgetDemo, self).__init__()
 
-# # make polar data
-# theta = np.linspace(0, 2 * np.pi, 100)
-# radius = np.random.normal(loc=10, size=100)
+        self.resize(400, 150)
+        #设置窗口标题
+        self.setWindowTitle("QStackedWidgetDemo")
 
-# # Transform to cartesian and plot
-# x = radius * np.cos(theta)
-# y = radius * np.sin(theta)
-# plot.plot(x, y)
+        #创建列表窗口，添加条目
+        listWidget = QListWidget()
+        listWidget.insertItem(0,'联系方式')
+        listWidget.insertItem(1,'个人信息')
+        listWidget.insertItem(2,'教育程度')
+        listWidget.currentRowChanged.connect(self.rowChanged)
 
-if __name__ == "__main__":
-    import sys
+        #创建三个小控件
+        stack1 = QLabel('标签一',self)
+        stack2 = QLabel('标签二',self)
+        stack3 = QLabel('标签三',self)
 
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, "PYQT_VERSION"):
-        QtGui.QApplication.instance().exec_()
+        #在QStackedWidget对象中填充了三个子控件
+        self.stackedWidget = QStackedWidget(self)
+        self.stackedWidget.addWidget(stack1)
+        self.stackedWidget.addWidget(stack2)
+        self.stackedWidget.addWidget(stack3)
+
+        layout = QHBoxLayout()
+        layout.addWidget(listWidget)
+        layout.addWidget(self.stackedWidget)
+
+        mainFrame = QWidget()
+        mainFrame.setLayout(layout)
+        self.setCentralWidget(mainFrame)
+
+    def rowChanged(self, i):
+        self.stackedWidget.setCurrentIndex(i)
+
+if  __name__ == '__main__':
+    app = QApplication(sys.argv)
+    main = QStackedWidgetDemo()
+    main.show()
+    sys.exit(app.exec_())
+

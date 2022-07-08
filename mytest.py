@@ -302,7 +302,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         else:
             self.btnPlay.setIcon(self.iconPlay)
 
-        self.btnStop.setEnabled(isPlaying)
+        self.btnMarkRecord.setEnabled(isPlaying)
 
     def do_durationChanged(self, duration):  ##文件长度变化
         self.timeSlider.setMaximum(duration)

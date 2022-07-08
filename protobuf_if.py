@@ -43,20 +43,21 @@ class All_Data:
 
     def get_radar_object_draw_list(self):
         radar_obj_list_draw = []
+        print('radar obj nr is %d'%self.redar_obj_cntr)
         for i in range(self.redar_obj_cntr):
             radar_obj = self.radar_obj_list[i]
             world_info_distlong = radar_obj.object_distlong
             world_info_distlat = radar_obj.object_distlat
 
             x,y = Radar_vcs2pixel.vcs2pixel(world_info_distlong, world_info_distlat)
-            length = radar_obj.length
-            width = radar_obj.width
+            length = radar_obj.object_length
+            width = radar_obj.object_width
             x = x - length/2
             y = y - width/2
             id = radar_obj.object_id
             box_2d = presentationLayer.Box_2D(x, y, length, width)
-            box_2d.set_text('radar obj id'+str(id))
-            box_2d.set_text(self.obj_color)
+            box_2d.set_text(str(id))
+            box_2d.set_color(presentationLayer.My_cv2_Color.Yellow)
             radar_obj_list_draw.append(box_2d)
 
         return radar_obj_list_draw
@@ -139,7 +140,7 @@ class Meta:
                     length = rect.right - rect.left
                     width = rect.bottom - rect.top
                     box_2d = presentationLayer.Box_2D(x=x, y=y, length=length, width=width)
-                    box_2d.set_text("id:%d" % obstacle.id)
+                    box_2d.set_text("camera id:%d" % obstacle.id)
                     box_2d.set_color(self.obj_color)
                     box_2d_list.append(box_2d)
 
@@ -153,8 +154,8 @@ class Meta:
                     points.append((int(box.lower_rb.x), int(box.lower_rb.y)))
                     points.append((int(box.lower_rt.x), int(box.lower_rt.y)))
                     points.append((int(box.lower_lt.x), int(box.lower_lt.y)))
-                    box_3d = presentationLayer.Box_3D(points=points)
-                    box_3d.set_text("id:%d" % obstacle.id)
+                    box_3d = presentationLayer.Box_3D(points)
+                    box_3d.set_text("camera obj id:%d" % obstacle.id)
                     box_3d.set_color(self.obj_color)
                     box_3d_list.append(box_3d)
 

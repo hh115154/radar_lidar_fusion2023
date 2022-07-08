@@ -176,15 +176,27 @@ class Ui_MainWindow(object):
         self.iconPause = QtGui.QIcon()
         self.iconPause.addPixmap(QtGui.QPixmap("./images/622.bmp"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
 
+        # 重叠控件
+        self.stackedWidget = QStackedWidget()
+        self.stackedWidget.setFixedWidth(200)
 
-        # self.btnStop = QtWidgets.QPushButton()
-        # self.btnStop.setEnabled(False)
-        # self.btnStop.setText("")
-        # icon3 = QtGui.QIcon()
-        # icon3.addPixmap(QtGui.QPixmap("./images/624.bmp"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        # self.btnStop.setIcon(icon3)
-        # self.btnStop.setObjectName("btnStop")
-        # btns_area_horizontallayout.addWidget(self.btnStop)
+        self.btnMarkRecord = QtWidgets.QPushButton()
+        self.btnMarkRecord.setEnabled(False)
+        self.btnMarkRecord.setText("")
+        icon3 = QtGui.QIcon()
+        icon3.addPixmap(QtGui.QPixmap("./images/316.bmp"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.btnMarkRecord.setIcon(icon3)
+        self.btnMarkRecord.setObjectName("btnMarkRecord")
+
+        self.combox_marked_points = QtWidgets.QComboBox()
+
+        self.combox_marked_points.setCurrentIndex(0)
+
+        self.stackedWidget.addWidget(self.btnMarkRecord)
+        self.stackedWidget.addWidget(self.combox_marked_points)
+        self.stackedWidget.setCurrentIndex(0)
+
+        btns_area_horizontallayout.addWidget(self.stackedWidget)
 
         self.LabRatio = QtWidgets.QLabel("进度")
         self.LabRatio.setMinimumSize(QtCore.QSize(60, 0))

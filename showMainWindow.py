@@ -195,8 +195,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 box_2d.draw_to_pic(self.pic_fusion)
             for box_3d in self.fusion_3dBox_list:
                 box_3d.draw_to_pic(self.pic_fusion)
-            for box_2d in self.radar_2dBox_list:
-                box_2d.draw_to_pic(self.pic_fusion)
+            for box_2d_ in self.radar_2dBox_list:
+                box_2d_.draw_to_pic(self.pic_fusion)
 
             # box = presentationLayer.Box_2D(100,2000,30,40)
             # box.set_color(presentationLayer.My_cv2_Color.Green)
@@ -267,7 +267,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.isRunning = False
         self.isOnlineMode = True
         self.btnPlay.setDisabled(False)
-        # self.btnStop.setDisabled(True)
+        # self.btnMarkRecord.setDisabled(True)
         self.left_button.setDisabled(True)
         self.right_button.setDisabled(True)
         self.timeSlider.setDisabled(True)
@@ -366,7 +366,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.btnOpen.setDisabled(True)
         self.left_button.setDisabled(True)
         self.right_button.setDisabled(True)
-        self.btnStop.setDisabled(True)
+        self.btnMarkRecord.setDisabled(True)
 
         self.btnPlay.setDisabled(False)
         self.btnPlay.setIcon(self.iconPlay)
@@ -429,7 +429,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         self.isRunning = True
         self.btnPlay.setDisabled(False)
-        self.btnStop.setDisabled(False)
+        self.btnMarkRecord.setDisabled(False)
         self.btnOpen.setDisabled(True)
         self.btnPlay.setIcon(self.iconPause)
 
