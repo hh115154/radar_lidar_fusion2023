@@ -239,6 +239,16 @@ class Box_3D(obj_shape):
         cv2.putText(pic, self.text, (self.point_list[0][0], self.point_list[0][1]), cv2.FONT_HERSHEY_PLAIN, self.font_size, self.color, self.pen_size)
 
 
+class Lane(obj_shape):
+    def __init__(self, point_list):
+        super(Lane, self).__init__()
+        self.point_list = point_list
+        self.color = My_cv2_Color.White
+
+    def draw_to_pic(self, pic):
+        for i in len(self.point_list-1):
+            cv2.line(pic, self.point_list[i], self.point_list[i+1], self.color, self.pen_size)
+
 
 
 class Text_Lable:

@@ -34,7 +34,10 @@ mark_line_head = '#hh# @'
 
 
 #pic info
+camera_id = 0 #0:laptop ; 1: external camera
 pic_width = 3840
 pic_height = 2160
+
+
 
 

@@ -35,6 +35,7 @@ map_hight_color = {1:(0.,0,1,1),
 class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyController, self).__init__()
+
         self.setupUi(self)
         self.testCntr = 0
 
@@ -60,7 +61,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.total_time_s = 0
         self.readRadarLogFileThread = None
 
-        self.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # QCamera对象
+        self.camera = cv2.VideoCapture(ConfigConstantData.camera_id , cv2.CAP_DSHOW)  # QCamera对象
         self.orgRadarThread = threadMngt.OriginalRadarThread()
 
         if ConfigConstantData.MachineType == ConfigConstantData.J3System:
@@ -95,6 +96,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
             self.meta_2d_obj_list = []
             self.meta_3d_obj_list = []
+            self.meta_lane_list = []
 
             self.radar_2dBox_list = []
             self.fusion_2dBox_list = []
@@ -176,6 +178,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             for box_3d in self.meta_3d_obj_list:
                 box_3d.draw_to_pic(self.pic_meta)
 
+            for lane in self.meta_lane_list:
+                lane.draw_to_pic(self.pic_meta)
+
             # test code
             # box = presentationLayer.Box_2D(100.123,20.456,30.789,40.111)
             # box.set_color(presentationLayer.My_cv2_Color.Red)
@@ -189,6 +194,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             # box_3D.draw_to_pic(self.pic_meta)
 
     def set_fusion_pic(self):
+
         self.pic_fusion = self.clear_pic()
         if self.checkBox_Fusion.isChecked():
             for box_2d in self.fusion_2dBox_list:
@@ -223,14 +229,16 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         pic = QtGui.QImage(pic.data, pic.shape[1], pic.shape[0],QImage.Format_RGB888)
         self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
 
-    def show_meta_objects(self,box_2d_list,box_3d_list):
+    def show_meta_objects(self,box_2d_list,box_3d_list, lane_list):
         self.meta_2d_obj_list = []
         self.meta_3d_obj_list = []
+        self.meta_lane_list = []
         self.pic_meta = self.clear_pic()
 
         if self.checkBox_OrgObj.isChecked():
             self.meta_2d_obj_list = box_2d_list
             self.meta_3d_obj_list = box_3d_list
+            self.meta_lane_list = lane_list
 
     def update_log_progress(self):
         self.timeSlider.setValue(self.readRadarLogFileThread.logFile.currLineNr)

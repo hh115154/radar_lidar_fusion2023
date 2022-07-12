@@ -4,12 +4,15 @@ __author__ = 'Yang Hongxu'
 # @Time     : 2022/6/30 20:20
 # @File     : protobuf_if.py
 # @Project  : radar_fusion
+import numpy as np
+
 import ConfigConstantData
 import Radar_vcs2pixel
 import presentationLayer
 import all_data_pb2
 import meta_pb2
 import Radar_vcs2pixel
+import common_pb2
 
 map_color2String = {
     0 : 'vehicle',
@@ -65,6 +68,7 @@ class All_Data:
     def get_fused_object_draw_list(self):
         fused_2dBox_lit = []
         fused_3dBox_lit = []
+        print('fused obj cntr is:%d'%self.fused_obj_cntr)
         for i in range(self.fused_obj_cntr):
             fused_obj = self.fused_obj_list[i]
             id = fused_obj.track_id
@@ -117,6 +121,9 @@ class Meta:
         self.obj_color = presentationLayer.My_cv2_Color.Red
 
         self.obj2Dbox_list,self.obj3Dbox_list = self.get_3DBox_draw_List()
+
+        self.lane_list = self.get_lane_draw_List()
+
     def b_3D_pos_valid(self, left, right, top, bottom):
         pass
 
@@ -162,5 +169,66 @@ class Meta:
         print('mata 3D box conter is:', len(box_3d_list))
         print('mata 2D box conter is:', len(box_2d_list))
         return box_2d_list, box_3d_list
+
+    # each line is in form of quadratic equation
+    # that is, y = f(x) = coeffs[0] + x * coeff[1] + x ^ 2 * coeff[2] + x ^ 3 *coeff[3]
+    # in otherword,
+    # y = (Intercept = coeffs[0])
+    #    + (Slop = coeffs[1]) * x
+    #    + (Curvature = coeffs[2] / 2) * x ^ 2
+    #    + (curvature Variation = coeffs[3] / 6) * x ^ 3
+    #    and, radius of curvrature at
+    # f(0) = ((1 + Slop ^ 2) ^ (3 / 2)) / fabs(Curvature)
+    def line_f(self, y, coeffs):
+        x = coeffs[0]
+        factor = 1.0
+        for i in range(len(coeffs)):
+            factor *= y
+            x += coeffs[i] * factor
+        return x
+
+    def CvtVcsGndToImage(self, x, y):
+        p = self.meta_data.lane_camera_matrix[0].mat_vcsgnd2img
+        t = p[6]* x + p[7] * y + p[8]
+        x1 = (p[0] * x + p[1] * y + p[2]) / t
+        y1 = (p[3] * x + p[4] * y + p[5]) / t
+        return x1, y1
+
+    def get_lane_info(self):
+        lane_list = []
+        lines = self.meta_data.structure_perception.lines
+        line_cntr = 0
+        if len(lines) > 0:
+            line_cntr = len(lines[0].lines)
+            for i in range(line_cntr):
+                line = lines[0].lines[i]
+                if 2 == len(line.end_points) and (line.type & common_pb2.LINE_RAW):
+                    points = []
+                    end_pt_x0 = line.end_points[0].x
+                    end_pt_y0 = line.end_points[0].y
+                    end_pt_x1 = line.end_points[1].x
+                    end_pt_y1 = line.end_points[1].y
+                    st_x = min(end_pt_x0, end_pt_x1)
+                    end_x = max(end_pt_x0, end_pt_x1)
+                    st_y = self.line_f(st_x, line.coeffs)
+
+                    for x in range(st_x, end_x, 1):
+                        y = self.line_f(x, line.coeffs)
+                        pt_x1, pt_y1 = self.CvtVcsGndToImage(x, y)
+                        if 0 < pt_x1 and pt_x1 < ConfigConstantData.pic_width and 0 < pt_y1 and pt_y1 < ConfigConstantData.pic_height:
+                            points.append((int(pt_x1), int(pt_y1)))
+
+                    lane_list.append(points)
+
+        return lane_list
+
+
+
+
+
+
+
+
+
 
 

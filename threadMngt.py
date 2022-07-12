@@ -20,6 +20,8 @@ import ConfigConstantData
 import protobuf_if
 from datetime import datetime
 
+import my_util
+
 
 import all_data_pb2
 
@@ -46,7 +48,7 @@ class BaseThread(QThread):
 		self.todo_mark = False
 
 	def log_a_frame_to_file_as_a_line(self, frame):
-		strData = frame.hex(' ') + '\n'
+		strData =my_util.get_timestamp_str() + frame.hex(' ') + '\n'
 		self.log_file.write(strData)
 		self.log_this_frame = False
 
@@ -208,11 +210,11 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 			self.log_this_frame = self.bLoggingFile # log all frames received if logging
 			self.Data = protobuf_if.All_Data(self.recv_message)
 
-			if len(self.Data.radar_obj_list_draw) > 0:# 使用有效数据更新视图数据
-				self.Radar2D_obj_signal.emit(self.Data.radar_obj_list_draw)
+			# if len(self.Data.radar_obj_list_draw) > 0:# 使用有效数据更新视图数据
+			self.Radar2D_obj_signal.emit(self.Data.radar_obj_list_draw)
 
-			if len(self.Data.fused_obj_box2D) > 0:
-				self.fused_objList_signal.emit(self.Data.fused_obj_box2D,self.Data.fused_obj_box3D)
+			# if len(self.Data.fused_obj_box2D) > 0:
+			self.fused_objList_signal.emit(self.Data.fused_obj_box2D,self.Data.fused_obj_box3D)
 
 
 		except Exception as e:
@@ -239,7 +241,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 
 
 class J3A_MetaData_RecvThd(BaseThread):
-	meta_obj_list_ignal = pyqtSignal(list,list)
+	meta_obj_list_ignal = pyqtSignal(list,list,list)
 	def __init__(self):
 		super(J3A_MetaData_RecvThd, self).__init__()
 		self.socket = zmq_sub_client_socket(ConfigConstantData.J3A_socket_if)
@@ -256,7 +258,7 @@ class J3A_MetaData_RecvThd(BaseThread):
 				if self.recv_message[0] == 8: # meta data
 					self.Meta = protobuf_if.Meta(self.recv_message)
 					print("frame_id is:", self.Meta.frame_id)
-					self.meta_obj_list_ignal.emit(self.Meta.obj2Dbox_list, self.Meta.obj3Dbox_list)
+					self.meta_obj_list_ignal.emit(self.Meta.obj2Dbox_list, self.Meta.obj3Dbox_list, self.lane_list)
 					self.log_this_frame = True
 
 				elif self.recv_message[0] == 0:  # image info
