@@ -138,10 +138,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.orgRadarThread.start()
 
     def pic_show(self):
-        if self.checkBox_pic.isChecked():
-            pic_info = self.meta_pic_queue.get()
-            img = cv2.imdecode(np.frombuffer(pic_info, np.uint8), cv2.IMREAD_COLOR)
-            data = cv2.resize(img, dsize=(ConfigConstantData.pic_width, ConfigConstantData.pic_height), fx=1, fy=1, interpolation=cv2.INTER_LINEAR)
+        pass
+        # if self.checkBox_pic.isChecked():
+        #     pic_info = self.meta_pic_queue.get()
+        #     img = cv2.imdecode(np.frombuffer(pic_info, np.uint8), cv2.IMREAD_COLOR)
+        #     data = cv2.resize(img, dsize=(ConfigConstantData.pic_width, ConfigConstantData.pic_height), fx=1, fy=1, interpolation=cv2.INTER_LINEAR)
 
 
     def buf_pic_info(self, pic_info):
@@ -181,7 +182,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if self.checkBox_pic.isChecked():
             r, f = self.camera.read()
             if r:
+                # self.pic_org = f
                 self.pic_org = cv2.resize(f, (ConfigConstantData.pic_width, ConfigConstantData.pic_height))
+                if self.isRunning:
+                    self.savePictures(f)
 
     def set_meta_pic(self):
         self.pic_meta = self.clear_pic()
@@ -372,7 +376,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         filStr = self.log_folder_path[-26:] + '_Frame_' + str(self.picNameNr)+'.jpg'
         picName =self.log_folder_path + '/' + filStr
         self.picNameNr += 1
-        res = cv2.resize(f, (320, 240), interpolation=cv2.INTER_CUBIC)
+        res = cv2.resize(f, (320,240), interpolation=cv2.INTER_CUBIC)
         cv2.imwrite(picName, res)
 
     def showCamera(self):

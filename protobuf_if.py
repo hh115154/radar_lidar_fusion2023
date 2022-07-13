@@ -87,7 +87,9 @@ class All_Data:
             x1 = fused_obj.rect.right
             y1 = fused_obj.rect.bottom
             box_2d = presentationLayer.Box_2D(x0, y0, x1-x0, y1-y0)
-            box_2d.set_text('fused obj id:'+str(id) + ' , type:'+get_typestr_by_type(type) + ',  conf:'+str(conf))
+            box_2d.font_size = 1
+            # box_2d.set_text('fused obj id:'+str(id) + ' , type:'+get_typestr_by_type(type) + ',  conf:'+str(conf))
+            box_2d.set_text(str(id) + get_typestr_by_type(type))
             box_2d.set_color(self.obj_color)
             fused_2dBox_lit.append(box_2d)
 
@@ -181,12 +183,13 @@ class Meta:
     #    and, radius of curvrature at
     # f(0) = ((1 + Slop ^ 2) ^ (3 / 2)) / fabs(Curvature)
     def line_f(self, y, coeffs):
-        x = coeffs[0]
-        factor = 1.0
-        for i in range(len(coeffs)):
-            factor *= y
-            x += coeffs[i] * factor
-        return x
+        # x = 0
+        # factor = 1.0
+        # for tmp in coeffs:
+        #     factor *= y
+        #     x += tmp * factor
+        # return x
+        return coeffs[0] + y * coeffs[1] + y ** 2 * coeffs[2] + y ** 3 * coeffs[3]
 
     def CvtVcsGndToImage(self, x, y):
         p = self.meta_data.lane_camera_matrix[0].mat_vcsgnd2img
@@ -203,15 +206,13 @@ class Meta:
             line_cntr = len(lines[0].lines)
             for i in range(line_cntr):
                 line = lines[0].lines[i]
+                print('line type is：', line.type)
                 if 2 == len(line.end_points) and (line.type & common_pb2.LINE_RAW):
                     points = []
                     end_pt_x0 = line.end_points[0].x
-                    end_pt_y0 = line.end_points[0].y
                     end_pt_x1 = line.end_points[1].x
-                    end_pt_y1 = line.end_points[1].y
                     st_x = min(end_pt_x0, end_pt_x1)
                     end_x = max(end_pt_x0, end_pt_x1)
-                    st_y = self.line_f(st_x, line.coeffs)
 
                     for x in np.arange(st_x,end_x, 0.1):
                         y = self.line_f(x, line.coeffs)

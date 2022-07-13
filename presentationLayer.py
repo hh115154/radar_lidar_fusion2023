@@ -143,8 +143,8 @@ class obj_shape:
     def __init__(self):
         self.color = My_cv2_Color.White
         self.text = ''
-        self.pen_size = 3
-        self.font_size = 4
+        self.pen_size = 2
+        self.font_size = 1
 
     def set_color(self, color):
         self.color = color
@@ -244,6 +244,7 @@ class Lane(obj_shape):
         super(Lane, self).__init__()
         self.point_list = point_list
         self.color = My_cv2_Color.White
+        self.pen_size = 3
 
     def draw_to_pic(self, pic):
         print('lane contr is:',len(self.point_list))
