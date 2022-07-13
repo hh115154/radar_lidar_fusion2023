@@ -1,6 +1,8 @@
 import zmq
 import time
 import numpy as np
+import queue as Queue
+import ConfigConstantData
 import meta_pb2
 import common_pb2
 import cv2
@@ -13,6 +15,9 @@ from ctypes import *
 import os
 from PIL import Image
 from io import BytesIO
+
+
+
 
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
@@ -61,6 +66,8 @@ while True:
         #     data = data_descriptor.data
         #     # print(data.type,data.proto,data.channel,data.with_data_field)
 
+    elif response[0] == 0:# h265
+        buf = np.zeros(ConfigConstantData.pic_width*ConfigConstantData.pic_height*3, dtype=np.uint8)
 
 
     elif response[1] == 216: # image info

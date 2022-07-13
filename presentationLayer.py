@@ -205,7 +205,7 @@ class Box_3D(obj_shape):
     def __init__(self, point_list):
         super(Box_3D, self).__init__()
         self.point_list = point_list
-        self.trans_pos2int()
+        # self.trans_pos2int()
 
     def trans_pos2int(self):
         print("need to trans pt position to int !!")
@@ -246,7 +246,8 @@ class Lane(obj_shape):
         self.color = My_cv2_Color.White
 
     def draw_to_pic(self, pic):
-        for i in len(self.point_list-1):
+        print('lane contr is:',len(self.point_list))
+        for i in range(len(self.point_list)-1):
             cv2.line(pic, self.point_list[i], self.point_list[i+1], self.color, self.pen_size)
 
 

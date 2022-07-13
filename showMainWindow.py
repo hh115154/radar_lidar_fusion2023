@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog
 import sys
 import os.path
 
+import queue as Queue
 import presentationLayer
 import testMainWindow_Ui
 import time
@@ -39,9 +40,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.setupUi(self)
         self.testCntr = 0
 
-
-
-
         # 快进
         self.right_button.clicked.connect(self.up_time)
         # 快退
@@ -72,12 +70,17 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
             self.metaThread = threadMngt.J3A_MetaData_RecvThd()
             self.metaThread.meta_obj_list_ignal.connect(self.show_meta_objects)
+            # self.metaThread.meta_picinfo_signal.connect(self.buf_pic_info)
             self.metaThread.start()
             self.metaThread.resume()
 
             self.timer_sensor_show = QtCore.QTimer()  # 控制雷达的刷新频率
             self.timer_sensor_show.timeout.connect(self.multi_pic_show)
             self.timer_sensor_show.start(ConfigConstantData.timer_online_sensor_show_ms)
+
+            self.timer_pic_show = QtCore.QTimer()  # 控制图片的刷新频率
+            self.timer_pic_show.timeout.connect(self.pic_show)
+            self.timer_pic_show.start(ConfigConstantData.timer_online_pic_show_ms)
 
             self.pic_shape = (ConfigConstantData.pic_height, ConfigConstantData.pic_width,3)
             self.pic_org = np.zeros(self.pic_shape, dtype=np.uint8)
@@ -97,6 +100,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.meta_2d_obj_list = []
             self.meta_3d_obj_list = []
             self.meta_lane_list = []
+            # self.meta_pic_queue = Queue(5)
 
             self.radar_2dBox_list = []
             self.fusion_2dBox_list = []
@@ -132,6 +136,16 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
             self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
             self.orgRadarThread.start()
+
+    def pic_show(self):
+        if self.checkBox_pic.isChecked():
+            pic_info = self.meta_pic_queue.get()
+            img = cv2.imdecode(np.frombuffer(pic_info, np.uint8), cv2.IMREAD_COLOR)
+            data = cv2.resize(img, dsize=(ConfigConstantData.pic_width, ConfigConstantData.pic_height), fx=1, fy=1, interpolation=cv2.INTER_LINEAR)
+
+
+    def buf_pic_info(self, pic_info):
+        self.meta_pic_queue.put(pic_info)
 
     def radar408_2dBox_show(self, radar_2dBox_list):
         self.radar_2dBox_list = []

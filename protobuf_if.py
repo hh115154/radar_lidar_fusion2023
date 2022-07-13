@@ -29,6 +29,7 @@ def get_typestr_by_type(type):
         str = 'unknown'
     return str
 
+
 class All_Data:
     def __init__(self, all_data_buf):
         all_data = all_data_pb2.Data()
@@ -122,7 +123,7 @@ class Meta:
 
         self.obj2Dbox_list,self.obj3Dbox_list = self.get_3DBox_draw_List()
 
-        self.lane_list = self.get_lane_draw_List()
+        self.lane_list = self.get_lane_info()
 
     def b_3D_pos_valid(self, left, right, top, bottom):
         pass
@@ -212,13 +213,14 @@ class Meta:
                     end_x = max(end_pt_x0, end_pt_x1)
                     st_y = self.line_f(st_x, line.coeffs)
 
-                    for x in range(st_x, end_x, 1):
+                    for x in np.arange(st_x,end_x, 0.1):
                         y = self.line_f(x, line.coeffs)
                         pt_x1, pt_y1 = self.CvtVcsGndToImage(x, y)
                         if 0 < pt_x1 and pt_x1 < ConfigConstantData.pic_width and 0 < pt_y1 and pt_y1 < ConfigConstantData.pic_height:
                             points.append((int(pt_x1), int(pt_y1)))
-
-                    lane_list.append(points)
+                    if len(points)>0:
+                        lane_p = presentationLayer.Lane(points)
+                        lane_list.append(lane_p)
 
         return lane_list
 

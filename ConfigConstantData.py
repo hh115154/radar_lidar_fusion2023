@@ -23,6 +23,7 @@ PclByteNr = 35336
 timer_readlogfile_ms = 50# 實際應該是50
 timer_online_sensor_show_ms = 100#
 timer_online_sensor_show_and_log_ms = 200#
+timer_online_pic_show_ms = 90
 
 # log file and pic file
 picture_saved_path = '/myLogFolder/'

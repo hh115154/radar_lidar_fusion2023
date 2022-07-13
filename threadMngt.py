@@ -242,6 +242,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
 
 class J3A_MetaData_RecvThd(BaseThread):
 	meta_obj_list_ignal = pyqtSignal(list,list,list)
+	meta_picinfo_signal = pyqtSignal(list)
 	def __init__(self):
 		super(J3A_MetaData_RecvThd, self).__init__()
 		self.socket = zmq_sub_client_socket(ConfigConstantData.J3A_socket_if)
@@ -258,12 +259,14 @@ class J3A_MetaData_RecvThd(BaseThread):
 				if self.recv_message[0] == 8: # meta data
 					self.Meta = protobuf_if.Meta(self.recv_message)
 					print("frame_id is:", self.Meta.frame_id)
-					self.meta_obj_list_ignal.emit(self.Meta.obj2Dbox_list, self.Meta.obj3Dbox_list, self.lane_list)
+					self.meta_obj_list_ignal.emit(self.Meta.obj2Dbox_list, self.Meta.obj3Dbox_list, self.Meta.lane_list)
 					self.log_this_frame = True
 
-				elif self.recv_message[0] == 0:  # image info
-					pass
+				# elif self.recv_message[0] == 0:  # h265 info
+				# 	pass
 					# print("1th long message len of %d"%msg_len)
+				# elif self.recv_message[1] == 216:  # jpeg
+				# 	self.meta_picinfo_signal.emit(self.recv_message)
 				elif self.recv_message[0] == 255:
 					pass
 					# if msg_len == 776:
