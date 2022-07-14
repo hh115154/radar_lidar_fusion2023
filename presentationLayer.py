@@ -240,33 +240,33 @@ class Box_3D(obj_shape):
 
 
 class Lane_Type():
-    Solid = 0,
-    Dashed = 1,
-    Road_edge = 2
+    SOLID = 0,
+    DASH = 1,
+    FENCE = 2# 路沿
 
 
 class Lane(obj_shape):
-    def __init__(self, point_list):
+    def __init__(self, point_list,type=Lane_Type.SOLID):
         super(Lane, self).__init__()
         self.point_list = point_list
         self.color = My_cv2_Color.White
         self.pen_size = 3
-        self.type = Lane_Type.Solid
-
-    def set_type(self, type):
         self.type = type
 
-        if self.type == Lane_Type.Solid:
-            self.color = My_cv2_Color.White
-        elif self.type == Lane_Type.Dashed:
-            self.color = My_cv2_Color.Green
-        elif self.type == Lane_Type.Road_edge:
+        if self.type == Lane_Type.FENCE:
             self.color = My_cv2_Color.Orange
+            self.pen_size = 1
 
     def draw_to_pic(self, pic):
         print('lane contr is:',len(self.point_list))
-        for i in range(len(self.point_list)-1):
-            cv2.line(pic, self.point_list[i], self.point_list[i+1], self.color, self.pen_size)
+        if self.type == Lane_Type.SOLID or self.type == Lane_Type.FENCE:# 实线
+            for i in range(len(self.point_list)-1):
+                cv2.line(pic, self.point_list[i], self.point_list[i+1], self.color, self.pen_size)
+        elif self.type == Lane_Type.DASH:
+            for i in range(len(self.point_list)-1):# 虚线
+                if i%3 !=0:
+                    cv2.line(pic, self.point_list[i], self.point_list[i+1], self.color, self.pen_size)
+
 
 
 class Text_Lable:

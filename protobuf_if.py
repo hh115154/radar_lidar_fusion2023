@@ -177,22 +177,7 @@ class Meta:
         print('mata 2D box conter is:', len(box_2d_list))
         return box_2d_list, box_3d_list
 
-    # each line is in form of quadratic equation
-    # that is, y = f(x) = coeffs[0] + x * coeff[1] + x ^ 2 * coeff[2] + x ^ 3 *coeff[3]
-    # in otherword,
-    # y = (Intercept = coeffs[0])
-    #    + (Slop = coeffs[1]) * x
-    #    + (Curvature = coeffs[2] / 2) * x ^ 2
-    #    + (curvature Variation = coeffs[3] / 6) * x ^ 3
-    #    and, radius of curvrature at
-    # f(0) = ((1 + Slop ^ 2) ^ (3 / 2)) / fabs(Curvature)
     def line_f(self, y, coeffs):
-        # x = 0
-        # factor = 1.0
-        # for tmp in coeffs:
-        #     factor *= y
-        #     x += tmp * factor
-        # return x
         return coeffs[0] + y * coeffs[1] + y ** 2 * coeffs[2] + y ** 3 * coeffs[3]
 
     def CvtVcsGndToImage(self, x, y):
@@ -201,6 +186,14 @@ class Meta:
         x1 = (p[0] * x + p[1] * y + p[2]) / t
         y1 = (p[3] * x + p[4] * y + p[5]) / t
         return x1, y1
+
+    def get_line_type(self,type_org):
+        if type_org & common_pb2.LINE_DASH:
+            return presentationLayer.Lane_Type.DASH
+        elif type_org & common_pb2.LINE_SOLID:
+            return presentationLayer.Lane_Type.SOLID
+        elif type_org & common_pb2.LINE_FENCE:
+            return presentationLayer.Lane_Type.FENCE
 
     def get_lane_info(self):
         lane_list = []
@@ -224,7 +217,8 @@ class Meta:
                         if 0 < pt_x1 and pt_x1 < ConfigConstantData.pic_width and 0 < pt_y1 and pt_y1 < ConfigConstantData.pic_height:
                             points.append((int(pt_x1), int(pt_y1)))
                     if len(points)>0:
-                        lane_p = presentationLayer.Lane(points)
+                        lane_type = self.get_line_type(line.type)
+                        lane_p = presentationLayer.Lane(points,lane_type)
                         lane_list.append(lane_p)
 
         return lane_list
