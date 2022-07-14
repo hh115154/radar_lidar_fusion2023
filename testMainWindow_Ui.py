@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
             #用于显示多层图片的lable
             self.lable_main = QtWidgets.QLabel()
             self.lable_main.setScaledContents(True)
-            self.lable_main.setFixedSize(QtCore.QSize(1900,900))
+            self.lable_main.setFixedSize(QtCore.QSize(1200,900))
 
             play_area_verticalLayout.addWidget(self.lable_main)
 
@@ -119,6 +119,16 @@ class Ui_MainWindow(object):
             # self.groupBox.setLayout(self.checkBox_layout)
 
             btns_area_horizontallayout.addLayout(self.checkBox_layout)
+
+
+            self.float_pic_wind = QDockWidget('camera_ref', self)
+            self.float_pic_wind.setAllowedAreas(Qt.NoDockWidgetArea)  ########禁止停靠任何地方
+            self.float_pic_wind.setFloating(True)
+
+            self.ref_pic_lable = QLabel()
+            self.ref_pic_lable.setScaledContents(True)
+            self.float_pic_wind.setWidget(self.ref_pic_lable)
+
 
 
         self.timeSlider = myControls.JumpSlider()

@@ -60,8 +60,10 @@ class All_Data:
             y = y - width/2
             id = radar_obj.object_id
             box_2d = presentationLayer.Box_2D(x, y, length, width)
+            box_2d.font_size = 2
+            box_2d.pen_size = 4
             box_2d.set_text(str(id))
-            box_2d.set_color(presentationLayer.My_cv2_Color.Yellow)
+            box_2d.set_color(presentationLayer.My_cv2_Color.Blue)
             radar_obj_list_draw.append(box_2d)
 
         return radar_obj_list_draw
@@ -144,15 +146,17 @@ class Meta:
                 obstacle = obs[0].obstacle[i]
                 rect = obstacle.img_info.rect
                 box = obstacle.img_info.box
+                obstacletype = obstacle.type
                 if rect:
-                    x = rect.left
-                    y = rect.top
-                    length = rect.right - rect.left
-                    width = rect.bottom - rect.top
-                    box_2d = presentationLayer.Box_2D(x=x, y=y, length=length, width=width)
-                    box_2d.set_text("camera id:%d" % obstacle.id)
-                    box_2d.set_color(self.obj_color)
-                    box_2d_list.append(box_2d)
+                    if obstacletype > 2 and obstacletype != 14: # abandon 3dBoxs and stopline
+                        x = rect.left
+                        y = rect.top
+                        length = rect.right - rect.left
+                        width = rect.bottom - rect.top
+                        box_2d = presentationLayer.Box_2D(x=x, y=y, length=length, width=width)
+                        box_2d.set_text("camera id:%d" % obstacle.id)
+                        box_2d.set_color(self.obj_color)
+                        box_2d_list.append(box_2d)
 
                 if box.conf>0:
                     points = []
@@ -165,7 +169,7 @@ class Meta:
                     points.append((int(box.lower_rt.x), int(box.lower_rt.y)))
                     points.append((int(box.lower_lt.x), int(box.lower_lt.y)))
                     box_3d = presentationLayer.Box_3D(points)
-                    box_3d.set_text("camera obj id:%d" % obstacle.id)
+                    box_3d.set_text(obstacle.id)
                     box_3d.set_color(self.obj_color)
                     box_3d_list.append(box_3d)
 

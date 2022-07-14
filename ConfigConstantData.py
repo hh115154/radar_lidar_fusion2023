@@ -23,7 +23,7 @@ PclByteNr = 35336
 timer_readlogfile_ms = 50# 實際應該是50
 timer_online_sensor_show_ms = 100#
 timer_online_sensor_show_and_log_ms = 200#
-timer_online_pic_show_ms = 90
+timer_online_pic_show_ms = 120
 
 # log file and pic file
 picture_saved_path = '/myLogFolder/'
@@ -35,7 +35,7 @@ mark_line_head = '#hh# @'
 
 
 #pic info
-camera_id = 0 #0:laptop ; 1: external camera
+camera_id = 1 #0:laptop ; 1: external camera
 pic_width = 3840
 pic_height = 2160
 

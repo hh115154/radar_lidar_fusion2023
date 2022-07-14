@@ -79,7 +79,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.timer_sensor_show.start(ConfigConstantData.timer_online_sensor_show_ms)
 
             self.timer_pic_show = QtCore.QTimer()  # 控制图片的刷新频率
-            self.timer_pic_show.timeout.connect(self.pic_show)
+            self.timer_pic_show.timeout.connect(self.showCamera)
             self.timer_pic_show.start(ConfigConstantData.timer_online_pic_show_ms)
 
             self.pic_shape = (ConfigConstantData.pic_height, ConfigConstantData.pic_width,3)
@@ -179,13 +179,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     def set_org_pic(self):
         self.pic_org = self.clear_pic()
-        if self.checkBox_pic.isChecked():
-            r, f = self.camera.read()
-            if r:
-                # self.pic_org = f
-                self.pic_org = cv2.resize(f, (ConfigConstantData.pic_width, ConfigConstantData.pic_height))
-                if self.isRunning:
-                    self.savePictures(f)
+        # if self.checkBox_pic.isChecked():
+        #     r, f = self.camera.read()
+        #     if r:
+        #         # self.pic_org = f
+        #         self.pic_org = cv2.resize(f, (ConfigConstantData.pic_width, ConfigConstantData.pic_height))
+        #         if self.isRunning:
+        #             self.savePictures(f)
 
     def set_meta_pic(self):
         self.pic_meta = self.clear_pic()
@@ -364,8 +364,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         if self.isOnlineMode:
             frame = self.showCamera()
-            if self.isRunning:
-                self.savePictures(frame)
+
 
     def getCurrTimeStr(self):
         timestamp = time.time()
@@ -384,7 +383,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if r:
             show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
             show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
-            self.lable_camera.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(320, 240, QtCore.Qt.KeepAspectRatio))
+            self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(320, 240, QtCore.Qt.KeepAspectRatio))
+            if self.isRunning:
+                self.savePictures(f)
         return f
 
     def set_runtime_mode(self):

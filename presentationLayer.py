@@ -127,6 +127,7 @@ class MyCuboid(BaseObject):
     def setHight(self, hight):
         self.height = hight
 
+
 class My_cv2_Color():
     White = (255, 255, 255)
     Black = (0, 0, 0)
@@ -193,7 +194,6 @@ class Box_2D(obj_shape):
         # cv2.putText(pic, self.text, tuple(ptLeftTop), cv2.FONT_HERSHEY_PLAIN, 2, de_color, self.pen_size)
 
 
-
 class Box_3D(obj_shape):
 
     #
@@ -239,18 +239,34 @@ class Box_3D(obj_shape):
         cv2.putText(pic, self.text, (self.point_list[0][0], self.point_list[0][1]), cv2.FONT_HERSHEY_PLAIN, self.font_size, self.color, self.pen_size)
 
 
+class Lane_Type():
+    Solid = 0,
+    Dashed = 1,
+    Road_edge = 2
+
+
 class Lane(obj_shape):
     def __init__(self, point_list):
         super(Lane, self).__init__()
         self.point_list = point_list
         self.color = My_cv2_Color.White
         self.pen_size = 3
+        self.type = Lane_Type.Solid
+
+    def set_type(self, type):
+        self.type = type
+
+        if self.type == Lane_Type.Solid:
+            self.color = My_cv2_Color.White
+        elif self.type == Lane_Type.Dashed:
+            self.color = My_cv2_Color.Green
+        elif self.type == Lane_Type.Road_edge:
+            self.color = My_cv2_Color.Orange
 
     def draw_to_pic(self, pic):
         print('lane contr is:',len(self.point_list))
         for i in range(len(self.point_list)-1):
             cv2.line(pic, self.point_list[i], self.point_list[i+1], self.color, self.pen_size)
-
 
 
 class Text_Lable:
