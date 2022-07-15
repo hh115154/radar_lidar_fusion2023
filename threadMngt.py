@@ -27,7 +27,7 @@ import all_data_pb2
 
 
 class BaseThread(QThread):
-	def __init__(self, parent=None, bOnLineRecvMode=True):
+	def __init__(self, parent=None, _bOnLineRecvMode=True):
 		super(BaseThread, self).__init__(parent)
 		self.mutex = QMutex()
 		self.cond = QWaitCondition()
@@ -38,14 +38,14 @@ class BaseThread(QThread):
 		self.log_file = ''
 		self.mark_line_id = 0
 		self.todo_mark = False
-		self.bOnLineRecvMode = bOnLineRecvMode
+		self.bOnLineRecvMode = _bOnLineRecvMode
 
 	def get_next_frame_info(self):
-		if self.bLoggingFile:
+		if self.bOnLineRecvMode:
 			self.recv_message = self.socket.client_socket.recv()
 		else:
-			pass
-			# self.recv_message =
+			self.recv_message = self.log_file.get_curr_frame()
+			self.log_file.next_frame()
 
 	def mark_a_line_of_frameInfo(self):
 		strData = ConfigConstantData.mark_line_head + str(self.mark_line_id) + '\n'
@@ -261,7 +261,7 @@ class J3A_MetaData_RecvThd(BaseThread):
 				self.cond.wait(self.mutex)
 			print("J3 camera meta data recv thread is running")
 			try:
-				self.recv_message = self.socket.client_socket.recv()
+				self.get_next_frame_info()
 
 				if self.recv_message[0] == 8: # meta data
 					self.Meta = protobuf_if.Meta(self.recv_message)

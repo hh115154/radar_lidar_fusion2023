@@ -82,22 +82,11 @@ class All_Data:
             height = fused_obj.height
             velocity = fused_obj.vel
             acceleration = fused_obj.acc
-
-
-            x0 = fused_obj.rect.left
-            y0 = fused_obj.rect.top
-            x1 = fused_obj.rect.right
-            y1 = fused_obj.rect.bottom
-            box_2d = presentationLayer.Box_2D(x0, y0, x1-x0, y1-y0)
-            box_2d.font_size = 1
-            # box_2d.set_text('fused obj id:'+str(id) + ' , type:'+get_typestr_by_type(type) + ',  conf:'+str(conf))
-            box_2d.set_text(str(id) + get_typestr_by_type(type))
-            box_2d.set_color(self.obj_color)
-            fused_2dBox_lit.append(box_2d)
-
-            if conf>0:
-                box = fused_obj.box
-                points=[]
+            box = None
+            box = fused_obj.box
+            if box.conf >0:
+                print('fused type is:',type)
+                points = []
                 points.append((int(box.upper_lb.x), int(box.upper_lb.y)))
                 points.append((int(box.upper_rb.x), int(box.upper_rb.y)))
                 points.append((int(box.upper_rt.x), int(box.upper_rt.y)))
@@ -108,9 +97,20 @@ class All_Data:
                 points.append((int(box.lower_lt.x), int(box.lower_lt.y)))
 
                 box_3d = presentationLayer.Box_3D(points)
-                box_3d.set_text("id:%d" % id)
+                box_3d.set_text(id)
                 box_3d.set_color(self.obj_color)
                 fused_3dBox_lit.append(box_3d)
+            else:
+                x0 = fused_obj.rect.left
+                y0 = fused_obj.rect.top
+                x1 = fused_obj.rect.right
+                y1 = fused_obj.rect.bottom
+                box_2d = presentationLayer.Box_2D(x0, y0, x1 - x0, y1 - y0)
+                box_2d.font_size = 1
+                # box_2d.set_text('fused obj id:'+str(id) + ' , type:'+get_typestr_by_type(type) + ',  conf:'+str(conf))
+                box_2d.set_text(str(id) + get_typestr_by_type(type))
+                box_2d.set_color(self.obj_color)
+                fused_2dBox_lit.append(box_2d)
 
         return fused_2dBox_lit, fused_3dBox_lit
 
@@ -144,21 +144,13 @@ class Meta:
 
             for i in range(obj_nr):
                 obstacle = obs[0].obstacle[i]
+                box =None
+                rect = None
                 rect = obstacle.img_info.rect
                 box = obstacle.img_info.box
                 obstacletype = obstacle.type
-                if rect:
-                    if obstacletype > 2 and obstacletype != 14: # abandon 3dBoxs and stopline
-                        x = rect.left
-                        y = rect.top
-                        length = rect.right - rect.left
-                        width = rect.bottom - rect.top
-                        box_2d = presentationLayer.Box_2D(x=x, y=y, length=length, width=width)
-                        box_2d.set_text("camera id:%d" % obstacle.id)
-                        box_2d.set_color(self.obj_color)
-                        box_2d_list.append(box_2d)
 
-                if box.conf>0:
+                if box.conf>0 :
                     points = []
                     points.append((int(box.upper_lb.x), int(box.upper_lb.y)))
                     points.append((int(box.upper_rb.x), int(box.upper_rb.y)))
@@ -172,6 +164,16 @@ class Meta:
                     box_3d.set_text(obstacle.id)
                     box_3d.set_color(self.obj_color)
                     box_3d_list.append(box_3d)
+                else:
+                    if obstacletype !=common_pb2.ObstacleType_StopLine:
+                        x = rect.left
+                        y = rect.top
+                        length = rect.right - rect.left
+                        width = rect.bottom - rect.top
+                        box_2d = presentationLayer.Box_2D(x=x, y=y, length=length, width=width)
+                        box_2d.set_text(obstacle.id)
+                        box_2d.set_color(self.obj_color)
+                        box_2d_list.append(box_2d)
 
         print('mata 3D box conter is:', len(box_3d_list))
         print('mata 2D box conter is:', len(box_2d_list))

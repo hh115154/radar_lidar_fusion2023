@@ -135,7 +135,7 @@ class My_cv2_Color():
     Green = (0, 255, 0)
     Blue = (255, 0, 0)
     Yellow = (0, 255, 255)
-    Cyan = ( 255, 255, 0)
+    Cyan = (255, 255, 0)
     Magenta = (255, 0, 255)
     Orange = (0, 128, 255)
 
@@ -145,13 +145,13 @@ class obj_shape:
         self.color = My_cv2_Color.White
         self.text = ''
         self.pen_size = 2
-        self.font_size = 1
+        self.font_size = 2
 
     def set_color(self, color):
         self.color = color
 
     def set_text(self, text):
-        self.text = text
+        self.text = str(text)
 
     def set_pen_size(self, pen_size):
         self.pen_size = pen_size
@@ -254,8 +254,7 @@ class Lane(obj_shape):
         self.type = type
 
         if self.type == Lane_Type.FENCE:
-            self.color = My_cv2_Color.Orange
-            self.pen_size = 1
+            self.color = My_cv2_Color.Cyan
 
     def draw_to_pic(self, pic):
         print('lane contr is:',len(self.point_list))
@@ -264,7 +263,7 @@ class Lane(obj_shape):
                 cv2.line(pic, self.point_list[i], self.point_list[i+1], self.color, self.pen_size)
         elif self.type == Lane_Type.DASH:
             for i in range(len(self.point_list)-1):# 虚线
-                if i%3 !=0:
+                if i%2 == 0:
                     cv2.line(pic, self.point_list[i], self.point_list[i+1], self.color, self.pen_size)
 
 

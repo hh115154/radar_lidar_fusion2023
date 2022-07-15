@@ -375,7 +375,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     def savePictures(self, f):
         ts = my_util.get_timestamp_str()
-        filStr = self.log_folder_path[-26:] + ts+'.jpg'
+        filStr = self.log_folder_path[-26:-8] + ts+'.jpg'
         picName =self.log_folder_path + '/' + filStr
         self.picNameNr += 1
         res = cv2.resize(f, (320,240), interpolation=cv2.INTER_CUBIC)
@@ -386,7 +386,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if r:
             show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
             show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
-            self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(320, 240, QtCore.Qt.KeepAspectRatio))
+            self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(640, 480, QtCore.Qt.KeepAspectRatio))
             if self.isRunning:
                 self.savePictures(f)
         return f
@@ -426,44 +426,65 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread.logFile.set_Progress(self.readRadarLogFileThread.logFile.currLineNr)
         self.readRadarLogFileThread.resume()
 
+    def getFileList_with_suffix(self,path, suffix):
+        input_template_All = []
+        input_template_All_Path = []
+        for root, dirs, files in os.walk(path, topdown=False):
+            for name in files:
+                # print(os.path.join(root, name))
+                print(name)
+                if os.path.splitext(name)[1] == suffix:
+                    input_template_All.append(name)
+                    input_template_All_Path.append(os.path.join(root, name))
+
+        return input_template_All, input_template_All_Path
+
     @pyqtSlot()  ##打开文件
     def on_btnOpen_clicked(self):
         curPath = QDir.currentPath()  # 获取系统当前目录
         title = "选择视频文件"
         # filt = "视频文件(*.wmv *.avi *.mp4);;所有文件(*.*)"
         filt = "log file(*.hex);;所有文件(*.*)"
-        fileName, flt = QFileDialog.getOpenFileName(self, title, curPath, filt)
-        if (fileName == ""):
-            return
-        if self.readRadarLogFileThread:
-            self.readRadarLogFileThread.terminate()
-            self.readRadarLogFileThread = None
+
+        # fileName, flt = QFileDialog.getOpenFileName(self, title, curPath, filt)
+        folde_path = QFileDialog.getExistingDirectory()
+
+        hex_list = self.getFileList_with_suffix(folde_path, '.hex')
+        jpg_list = self.getFileList_with_suffix(folde_path, '.jpg')
+
+        print('hi')
+
+        # if (fileName == ""):
+        #     return
+        # if self.readRadarLogFileThread:
+        #     self.readRadarLogFileThread.terminate()
+        #     self.readRadarLogFileThread = None
 
 
-        fileInfo = QFileInfo(fileName)
-        baseName = fileInfo.fileName()
-        ##      baseName=os.path.basename(fileName)
-        self.fileName.setText(baseName)
-
-        curPath = fileInfo.absolutePath()
-        QDir.setCurrent(curPath)  # 重设当前目录
-
-        self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(fileName)
-        self.readRadarLogFileThread.log_pcl_signal.connect(self.show_pcl)  # 仿真文件数据
-        self.readRadarLogFileThread.log_obj_signal.connect(self.show_objects)  # 仿真文件数据
-        self.readRadarLogFileThread.log_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
-        self.readRadarLogFileThread.log_showPic_signal.connect(self.show_one_pic) # 回放一张图片
-        self.readRadarLogFileThread.start()
-
-
-
-        self.isRunning = True
-        self.btnPlay.setDisabled(False)
-        self.btnMarkRecord.setDisabled(False)
-        self.btnOpen.setDisabled(True)
-        self.btnPlay.setIcon(self.iconPause)
-
-        self.init_timeSlider()
+        # fileInfo = QFileInfo(fileName)
+        # baseName = fileInfo.fileName()
+        # ##      baseName=os.path.basename(fileName)
+        # self.fileName.setText(baseName)
+        #
+        # curPath = fileInfo.absolutePath()
+        # QDir.setCurrent(curPath)  # 重设当前目录
+        #
+        # self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(fileName)
+        # self.readRadarLogFileThread.log_pcl_signal.connect(self.show_pcl)  # 仿真文件数据
+        # self.readRadarLogFileThread.log_obj_signal.connect(self.show_objects)  # 仿真文件数据
+        # self.readRadarLogFileThread.log_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
+        # self.readRadarLogFileThread.log_showPic_signal.connect(self.show_one_pic) # 回放一张图片
+        # self.readRadarLogFileThread.start()
+        #
+        #
+        #
+        # self.isRunning = True
+        # self.btnPlay.setDisabled(False)
+        # self.btnMarkRecord.setDisabled(False)
+        # self.btnOpen.setDisabled(True)
+        # self.btnPlay.setIcon(self.iconPause)
+        #
+        # self.init_timeSlider()
 
     def show_one_pic(self, picFullPath):
         # image = QtGui.QPixmap(picFullPath).scaled(320, 320)
