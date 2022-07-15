@@ -27,7 +27,7 @@ import all_data_pb2
 
 
 class BaseThread(QThread):
-	def __init__(self, parent=None):
+	def __init__(self, parent=None, bOnLineRecvMode=True):
 		super(BaseThread, self).__init__(parent)
 		self.mutex = QMutex()
 		self.cond = QWaitCondition()
@@ -38,8 +38,14 @@ class BaseThread(QThread):
 		self.log_file = ''
 		self.mark_line_id = 0
 		self.todo_mark = False
+		self.bOnLineRecvMode = bOnLineRecvMode
 
-
+	def get_next_frame_info(self):
+		if self.bLoggingFile:
+			self.recv_message = self.socket.client_socket.recv()
+		else:
+			pass
+			# self.recv_message =
 
 	def mark_a_line_of_frameInfo(self):
 		strData = ConfigConstantData.mark_line_head + str(self.mark_line_id) + '\n'
@@ -246,6 +252,7 @@ class J3A_MetaData_RecvThd(BaseThread):
 	def __init__(self):
 		super(J3A_MetaData_RecvThd, self).__init__()
 		self.socket = zmq_sub_client_socket(ConfigConstantData.J3A_socket_if)
+
 
 	def run(self) -> None:
 		while True:

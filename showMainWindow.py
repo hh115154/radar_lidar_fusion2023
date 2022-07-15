@@ -8,6 +8,8 @@ import sys
 import os.path
 
 import queue as Queue
+
+import my_util
 import presentationLayer
 import testMainWindow_Ui
 import time
@@ -372,7 +374,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         return strTime
 
     def savePictures(self, f):
-        filStr = self.log_folder_path[-26:] + '_Frame_' + str(self.picNameNr)+'.jpg'
+        ts = my_util.get_timestamp_str()
+        filStr = self.log_folder_path[-26:] + ts+'.jpg'
         picName =self.log_folder_path + '/' + filStr
         self.picNameNr += 1
         res = cv2.resize(f, (320,240), interpolation=cv2.INTER_CUBIC)

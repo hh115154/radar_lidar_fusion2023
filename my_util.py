@@ -8,8 +8,10 @@ __author__ = 'Yang Hongxu'
 from datetime import datetime
 
 
+time_stamp_format_str = '%H-%M-%S.%f'#'%H:%M:%S.%f'
+
 def get_timestamp_str():
-    return datetime.now().strftime('%H:%M:%S.%f')[:-4]
+    return datetime.now().strftime(time_stamp_format_str)[:-3]
 
 def get_timestamp_from_str(str):
-    return datetime.strptime(str, '%H:%M:%S.%f')
+    return datetime.strptime(str, time_stamp_format_str)
