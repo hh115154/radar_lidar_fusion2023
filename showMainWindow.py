@@ -6,10 +6,11 @@ from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog
 import sys
 import os.path
-
+import re
 import queue as Queue
 
 import my_util
+import hex_log_file
 import presentationLayer
 import testMainWindow_Ui
 import time
@@ -65,6 +66,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.orgRadarThread = threadMngt.OriginalRadarThread()
 
         if ConfigConstantData.MachineType == ConfigConstantData.J3System:
+            self.major_log_file_handl = None
+            self.ref_log_file_handl = None
+            self.log_pic_list = []
+
             self.orgRadarThread.Radar2D_obj_signal.connect(self.radar408_2dBox_show)
             self.orgRadarThread.fused_objList_signal.connect(self.fused_obj_list_show)
             self.orgRadarThread.start()
@@ -268,6 +273,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.LabRatio.setText(currTime_str)
 
     def init_timeSlider(self):
+        self.major_log_file_handl.timestamp_map_framedata.keys()[0]
         timeStamp_start = self.readRadarLogFileThread.logFile.getTimeStampByLineNr(0)
         lastLineNr  = self.readRadarLogFileThread.logFile.log_file_size-1
         timeStamp_end = self.readRadarLogFileThread.logFile.getTimeStampByLineNr(lastLineNr)
@@ -427,17 +433,17 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread.resume()
 
     def getFileList_with_suffix(self,path, suffix):
-        input_template_All = []
+        # input_template_All = []
         input_template_All_Path = []
         for root, dirs, files in os.walk(path, topdown=False):
             for name in files:
                 # print(os.path.join(root, name))
                 print(name)
                 if os.path.splitext(name)[1] == suffix:
-                    input_template_All.append(name)
+                    # input_template_All.append(name)
                     input_template_All_Path.append(os.path.join(root, name))
 
-        return input_template_All, input_template_All_Path
+        return input_template_All_Path
 
     @pyqtSlot()  ##打开文件
     def on_btnOpen_clicked(self):
@@ -450,9 +456,14 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         folde_path = QFileDialog.getExistingDirectory()
 
         hex_list = self.getFileList_with_suffix(folde_path, '.hex')
-        jpg_list = self.getFileList_with_suffix(folde_path, '.jpg')
+        self.log_pic_list = self.getFileList_with_suffix(folde_path, '.jpg')
 
-        print('hi')
+        for hexFile in hex_list:
+            if hexFile.endswith(ConfigConstantData.logfile_tail_affix_J3Camera):
+                self.major_log_file_handl = hex_log_file.Parse_Majority_Log_File(hexFile)
+            else:
+                self.ref_log_file_handl = hex_log_file.Parse_Extra_Log_File(hexFile)
+
 
         # if (fileName == ""):
         #     return
@@ -478,13 +489,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         #
         #
         #
-        # self.isRunning = True
-        # self.btnPlay.setDisabled(False)
-        # self.btnMarkRecord.setDisabled(False)
-        # self.btnOpen.setDisabled(True)
-        # self.btnPlay.setIcon(self.iconPause)
-        #
-        # self.init_timeSlider()
+        self.isRunning = True
+        self.btnPlay.setDisabled(False)
+        self.btnMarkRecord.setDisabled(False)
+        self.btnOpen.setDisabled(True)
+        self.btnPlay.setIcon(self.iconPause)
+
+        self.init_timeSlider()
 
     def show_one_pic(self, picFullPath):
         # image = QtGui.QPixmap(picFullPath).scaled(320, 320)
