@@ -8,7 +8,7 @@ import sys
 import os.path
 import re
 import queue as Queue
-
+import bisect as bs
 import my_util
 import hex_log_file
 import presentationLayer
@@ -65,10 +65,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.camera = cv2.VideoCapture(ConfigConstantData.camera_id , cv2.CAP_DSHOW)  # QCamera对象
         self.orgRadarThread = threadMngt.OriginalRadarThread()
 
+
         if ConfigConstantData.MachineType == ConfigConstantData.J3System:
-            self.major_log_file_handl = None
-            self.ref_log_file_handl = None
-            self.log_pic_list = []
+            self.timestamp_map_pic={}
+            self.timestamp_map_pic_key_list = []
 
             self.orgRadarThread.Radar2D_obj_signal.connect(self.radar408_2dBox_show)
             self.orgRadarThread.fused_objList_signal.connect(self.fused_obj_list_show)
@@ -85,14 +85,18 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.timer_sensor_show.timeout.connect(self.multi_pic_show)
             self.timer_sensor_show.start(ConfigConstantData.timer_online_sensor_show_ms)
 
-            self.timer_pic_show = QtCore.QTimer()  # 控制图片的刷新频率
-            self.timer_pic_show.timeout.connect(self.showCamera)
-            self.timer_pic_show.start(ConfigConstantData.timer_online_pic_show_ms)
+            self.log_read_timer = QtCore.QTimer()  # 控制雷达的刷新频率
+            self.log_read_timer.timeout.connect(self.resume_Threads_OffLine)
+
+            # self.timer_pic_show = QtCore.QTimer()  # 控制图片的刷新频率
+            # self.timer_pic_show.timeout.connect(self.showCamera)
+            # self.timer_pic_show.start(ConfigConstantData.timer_online_pic_show_ms)
 
             self.pic_shape = (ConfigConstantData.pic_height, ConfigConstantData.pic_width,3)
             self.pic_org = np.zeros(self.pic_shape, dtype=np.uint8)
             self.pic_meta = np.zeros(self.pic_shape, dtype=np.uint8)
             self.pic_fusion = np.zeros(self.pic_shape, dtype=np.uint8)
+            self.currOffLinePic = np.zeros(self.pic_shape, dtype=np.uint8)
 
 
 
@@ -144,6 +148,20 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
             self.orgRadarThread.start()
 
+    def resume_Threads_OffLine(self):
+        if self.metaThread.isRunning():
+            self.metaThread.resume()
+        if self.orgRadarThread.isRunning():
+            self.orgRadarThread.resume1(self.metaThread.log_file.get_curr_timestamp())
+
+        i = bs.bisect_left(self.timestamp_map_pic_key_list, self.metaThread.log_file.get_curr_timestamp())
+        pic_key= self.timestamp_map_pic_key_list[i]
+
+        self.currOffLinePic = QtGui.QPixmap(self.timestamp_map_pic[pic_key]).scaled(640, 480)
+
+
+
+
     def pic_show(self):
         pass
         # if self.checkBox_pic.isChecked():
@@ -187,12 +205,23 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def set_org_pic(self):
         self.pic_org = self.clear_pic()
         # if self.checkBox_pic.isChecked():
-        #     r, f = self.camera.read()
-        #     if r:
-        #         # self.pic_org = f
-        #         self.pic_org = cv2.resize(f, (ConfigConstantData.pic_width, ConfigConstantData.pic_height))
-        #         if self.isRunning:
-        #             self.savePictures(f)
+        if self.isOnlineMode:
+            r, f = self.camera.read()
+            if r:
+                show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+                show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
+                self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(640, 480, QtCore.Qt.KeepAspectRatio))
+                if self.isRunning:
+                    self.savePictures(f)
+        else:
+            self.ref_pic_lable.setPixmap(self.currOffLinePic)
+
+
+        # if r:
+        #     # self.pic_org = f
+        #     self.pic_org = cv2.resize(f, (ConfigConstantData.pic_width, ConfigConstantData.pic_height))
+        #     if self.isRunning:
+        #         self.savePictures(f)
 
     def set_meta_pic(self):
         self.pic_meta = self.clear_pic()
@@ -273,18 +302,19 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.LabRatio.setText(currTime_str)
 
     def init_timeSlider(self):
-        self.major_log_file_handl.timestamp_map_framedata.keys()[0]
-        timeStamp_start = self.readRadarLogFileThread.logFile.getTimeStampByLineNr(0)
-        lastLineNr  = self.readRadarLogFileThread.logFile.log_file_size-1
-        timeStamp_end = self.readRadarLogFileThread.logFile.getTimeStampByLineNr(lastLineNr)
+        major_log_file_handl = self.metaThread.log_file
+
+        timeStamp_start = major_log_file_handl.timestamp_list[0]
+        timeStamp_end = major_log_file_handl.timestamp_list[major_log_file_handl.log_file_size-1]
 
         self.total_time_s = timeStamp_end - timeStamp_start
 
-        totalTime_str =time.strftime("%H:%M:%S", time.gmtime(self.total_time_s))
+        totalTime_str = my_util.strfdelta(self.total_time_s, "%H:%M:%S")
+
 
         self.LabRatio.setText('00:00:00')
         self.LabTotal.setText('/ '+totalTime_str)
-        self.timeSlider.setMaximum(self.readRadarLogFileThread.logFile.log_file_size)
+        self.timeSlider.setMaximum(major_log_file_handl.log_file_size)
         self.timeSlider_oldValue = 0
 
     def on_timeslider_valueChanged(self):
@@ -432,18 +462,47 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.readRadarLogFileThread.logFile.set_Progress(self.readRadarLogFileThread.logFile.currLineNr)
         self.readRadarLogFileThread.resume()
 
-    def getFileList_with_suffix(self,path, suffix):
+    def getPicMap_with_suffix(self,path, suffix):
         # input_template_All = []
+        map_pic = {}
+        ts_list=[]
+        for root, dirs, files in os.walk(path, topdown=False):
+            for name in files:
+                if os.path.splitext(name)[1] == suffix:
+                    print(name)
+                    pic_full_name = os.path.join(root, name)
+                    str_ts = name[-16:-4]
+                    ts = my_util.get_timestamp_from_str(str_ts)
+                    ts_list.append(ts)
+                    map_pic[ts] = pic_full_name
+
+        return map_pic,ts_list
+
+    def getFileList_with_suffix(self,path, suffix):
+
         input_template_All_Path = []
         for root, dirs, files in os.walk(path, topdown=False):
             for name in files:
-                # print(os.path.join(root, name))
-                print(name)
                 if os.path.splitext(name)[1] == suffix:
-                    # input_template_All.append(name)
+                    print(name)
                     input_template_All_Path.append(os.path.join(root, name))
 
         return input_template_All_Path
+
+    def reset_threads(self,bOnLineMode=True):
+        self.metaThread.quit()
+        self.orgRadarThread.quit()
+
+        self.orgRadarThread = threadMngt.OriginalRadarThread(False)
+        self.orgRadarThread.Radar2D_obj_signal.connect(self.radar408_2dBox_show)
+        self.orgRadarThread.fused_objList_signal.connect(self.fused_obj_list_show)
+        self.orgRadarThread.start()
+
+
+        self.metaThread = threadMngt.J3A_MetaData_RecvThd(False)
+        self.metaThread.meta_obj_list_ignal.connect(self.show_meta_objects)
+        # self.metaThread.meta_picinfo_signal.connect(self.buf_pic_info)
+        self.metaThread.start()
 
     @pyqtSlot()  ##打开文件
     def on_btnOpen_clicked(self):
@@ -455,40 +514,19 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         # fileName, flt = QFileDialog.getOpenFileName(self, title, curPath, filt)
         folde_path = QFileDialog.getExistingDirectory()
 
+        self.reset_threads(True)
+
         hex_list = self.getFileList_with_suffix(folde_path, '.hex')
-        self.log_pic_list = self.getFileList_with_suffix(folde_path, '.jpg')
+        self.timestamp_map_pic, self.timestamp_map_pic_key_list = self.getPicMap_with_suffix(folde_path, '.jpg')
 
         for hexFile in hex_list:
             if hexFile.endswith(ConfigConstantData.logfile_tail_affix_J3Camera):
-                self.major_log_file_handl = hex_log_file.Parse_Majority_Log_File(hexFile)
-            else:
-                self.ref_log_file_handl = hex_log_file.Parse_Extra_Log_File(hexFile)
+                self.metaThread.log_file = hex_log_file.Parse_Majority_Log_File(hexFile)
+            elif hexFile.endswith(ConfigConstantData.logfile_tail_affix_J3Fusion):
+                self.orgRadarThread.log_file = hex_log_file.Parse_Extra_Log_File(hexFile)
 
 
-        # if (fileName == ""):
-        #     return
-        # if self.readRadarLogFileThread:
-        #     self.readRadarLogFileThread.terminate()
-        #     self.readRadarLogFileThread = None
 
-
-        # fileInfo = QFileInfo(fileName)
-        # baseName = fileInfo.fileName()
-        # ##      baseName=os.path.basename(fileName)
-        # self.fileName.setText(baseName)
-        #
-        # curPath = fileInfo.absolutePath()
-        # QDir.setCurrent(curPath)  # 重设当前目录
-        #
-        # self.readRadarLogFileThread = threadMngt.ReadRadarLogFileThread(fileName)
-        # self.readRadarLogFileThread.log_pcl_signal.connect(self.show_pcl)  # 仿真文件数据
-        # self.readRadarLogFileThread.log_obj_signal.connect(self.show_objects)  # 仿真文件数据
-        # self.readRadarLogFileThread.log_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
-        # self.readRadarLogFileThread.log_showPic_signal.connect(self.show_one_pic) # 回放一张图片
-        # self.readRadarLogFileThread.start()
-        #
-        #
-        #
         self.isRunning = True
         self.btnPlay.setDisabled(False)
         self.btnMarkRecord.setDisabled(False)
@@ -496,6 +534,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.btnPlay.setIcon(self.iconPause)
 
         self.init_timeSlider()
+
+        self.log_read_timer.start(self.metaThread.log_file.delta_t_ms)
 
     def show_one_pic(self, picFullPath):
         # image = QtGui.QPixmap(picFullPath).scaled(320, 320)

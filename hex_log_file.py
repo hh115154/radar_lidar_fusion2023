@@ -7,7 +7,7 @@ __author__ = 'Yang Hongxu'
 
 import my_util
 import bisect as bs
-timeStampStr_len = 13
+timeStampStr_len = 12
 import datetime
 
 
@@ -25,16 +25,19 @@ class Parse_Majority_Log_File():
         self.timestamp_map_framedata = {}
         for line in self.fileLines:
             ts = line[0:timeStampStr_len]
-            self.timestamp_map_framedata[my_util.get_timestamp_from_str(ts)] = line[timeStampStr_len + 1:]
+            self.timestamp_map_framedata[my_util.get_timestamp_from_str(ts)] = bytes.fromhex(line[timeStampStr_len:])
 
         self.timestamp_list = list(self.timestamp_map_framedata.keys())
-        self.curr_time_stamp = self.timestamp_list[0]
 
         self.log_file_size = len(self.timestamp_map_framedata)
         self.ts_list = list(self.timestamp_map_framedata.keys())
-        self.delta_t = self.ts_list[3] - self.ts_list[2]
-        self.delta_t = self.delta_t - self.delta_t % datetime.timedelta(microseconds=10000)
-        print('hi')
+
+        self.delta_t_ms = self.get_time_step()
+
+    def get_time_step(self):
+        delta_t = self.ts_list[3] - self.ts_list[2]
+        delta_t = delta_t - delta_t % datetime.timedelta(microseconds=10000)
+        return int(delta_t.microseconds / 1000)
 
     def bin_search_nearest_frame(self, time_stamp):
         i = bs.bisect_left(self.ts_list, time_stamp)
@@ -45,7 +48,7 @@ class Parse_Majority_Log_File():
         return self.timestamp_map_framedata[ts]
 
     def get_curr_frame(self):
-        ts = self.get_timestamp_by_line_num(self.curr_line_nr)
+        ts = self.timestamp_list[self.curr_line_nr]
         return self.timestamp_map_framedata[ts]
 
     def next_frame(self):
@@ -53,8 +56,8 @@ class Parse_Majority_Log_File():
         self.curr_line_nr %= self.log_file_size
         # ++1 until match the valid line of data
 
-    def get_timestamp_by_line_num(self, line_num):
-        return self.timestamp_list[line_num]
+    def get_curr_timestamp(self):
+        return self.timestamp_list[self.curr_line_nr]
 
 
 class Parse_Extra_Log_File(Parse_Majority_Log_File):
@@ -62,7 +65,7 @@ class Parse_Extra_Log_File(Parse_Majority_Log_File):
         super(Parse_Extra_Log_File, self).__init__(log_file_name)
 
 
-lf = Parse_Majority_Log_File('C:/Apps/radar_fusion/myLogFolder/Record_2022-07-15_11-52-02/Record_2022-07-15_11-52-02.zmq.j3radar_fusion.hex')
+# lf = Parse_Majority_Log_File('C:/Apps/radar_fusion/myLogFolder/Record_2022-07-15_11-52-02/Record_2022-07-15_11-52-02.zmq.j3radar_fusion.hex')
 
 
 
