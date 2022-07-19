@@ -88,14 +88,16 @@ class Ui_MainWindow(object):
             self.base_verticalLayout.addWidget(self.splitter_org_obj)
 
         elif ConfigConstantData.MachineType == ConfigConstantData.J3System:
+            self.splitter_main = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
 
             #用于显示多层图片的lable
             self.lable_main = QtWidgets.QLabel()
             self.lable_main.setScaledContents(True)
             self.lable_main.setFixedSize(QtCore.QSize(1200,900))
 
-            play_area_verticalLayout.addWidget(self.lable_main)
+            play_area_verticalLayout.addWidget(self.splitter_main)
 
+            self.splitter_main.addWidget(self.lable_main)
             # # 创建一个GroupBox组
             # self.groupBox = QGroupBox("图层选项")
             # self.groupBox.setFlat(False)
@@ -121,13 +123,17 @@ class Ui_MainWindow(object):
             btns_area_horizontallayout.addLayout(self.checkBox_layout)
 
 
-            self.float_pic_wind = QDockWidget('camera_ref', self)
-            self.float_pic_wind.setAllowedAreas(Qt.NoDockWidgetArea)  ########禁止停靠任何地方
-            self.float_pic_wind.setFloating(True)
+            # self.float_pic_wind = QDockWidget('camera_ref', self)
+            # self.float_pic_wind.setAllowedAreas(Qt.NoDockWidgetArea)  ########禁止停靠任何地方
+            # self.float_pic_wind.setFloating(True)
 
+            v_splitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
             self.ref_pic_lable = QLabel()
             self.ref_pic_lable.setScaledContents(True)
-            self.float_pic_wind.setWidget(self.ref_pic_lable)
+            self.splitter_main.addWidget(v_splitter)
+            empty_lable = QLabel()
+            v_splitter.addWidget(self.ref_pic_lable)
+            v_splitter.addWidget(empty_lable)
 
 
 

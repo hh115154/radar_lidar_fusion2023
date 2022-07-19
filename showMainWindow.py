@@ -98,7 +98,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.pic_fusion = np.zeros(self.pic_shape, dtype=np.uint8)
             self.currOffLinePic = np.zeros(self.pic_shape, dtype=np.uint8)
 
-
+            self.btnMarkRecord.clicked.connect(self.set_mark_flag)
 
             self.checkBox_pic.stateChanged.connect(self.set_multi_pic_weight)
             self.checkBox_OrgObj.stateChanged.connect(self.set_multi_pic_weight)
@@ -116,6 +116,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.radar_2dBox_list = []
             self.fusion_2dBox_list = []
             self.fusion_3dBox_list= []
+
+            self.combox_marked_points.currentIndexChanged.connect(self.jump_to_marked_point)
 
         elif ConfigConstantData.MachineType == ConfigConstantData.radar4D_548:
             # table
@@ -147,6 +149,15 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.orgRadarThread.orgRadar_obj_signal.connect(self.show_objects)  # 仿真文件数据
             self.orgRadarThread.orgRadar_objInfo_signal.connect(self.show_objectsInfo)  # 表格控件
             self.orgRadarThread.start()
+
+    def set_mark_flag(self):
+        self.metaThread.todo_mark = True
+
+    def jump_to_marked_point(self):
+        curr_idx = self.combox_marked_points.currentIndex()
+        str_timestamp = self.combox_marked_points.itemText(curr_idx)
+        timestamp = my_util.get_timestamp_from_str(str_timestamp)
+        self.metaThread.log_file.jump_to_timestamp(timestamp)
 
     def resume_Threads_OffLine(self):
         if self.isRunning:
@@ -338,7 +349,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.isRunning = False
         self.isOnlineMode = True
         self.btnPlay.setDisabled(False)
-        # self.btnMarkRecord.setDisabled(True)
+        self.btnMarkRecord.setDisabled(True)
         self.left_button.setDisabled(True)
         self.right_button.setDisabled(True)
         self.timeSlider.setDisabled(True)
@@ -443,6 +454,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.btnPlay.setDisabled(False)
         self.btnPlay.setIcon(self.iconPlay)
         self.timeSlider.setDisabled(True)
+        self.stackedWidget.setCurrentIndex(0)
 
         self.isOnlineMode = True
 
@@ -450,6 +462,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.btnPlay.setDisabled(True)
         self.timeSlider.setDisabled(False)
         self.btnOpen.setDisabled(False)
+        self.stackedWidget.setCurrentIndex(1)
         self.isOnlineMode = False
 
     def RunModeChange(self, index):
@@ -512,6 +525,16 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         # self.currOffLinePic = np.zeros(self.pic_shape, dtype=np.uint8)
         # self.currOffLinePic =QtGui.QPixmap(self.currOffLinePic.scaled(640, 480))
 
+    def init_mark_points_comb(self):
+        if len(self.metaThread.log_file.marked_timestamp_list)>0:
+            self.combox_marked_points.clear()
+            self.combox_marked_points.addItem('marked_points!')
+            self.combox_marked_points.addItems(self.metaThread.log_file.marked_timestamp_list)
+            self.combox_marked_points.setCurrentIndex(0)
+        else:
+            self.combox_marked_points.setDisabled(True)
+
+
 
     @pyqtSlot()  ##打开文件
     def on_btnOpen_clicked(self):
@@ -538,9 +561,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             print('no meta data log info!')
             return
 
+        self.init_mark_points_comb()
+
         self.isRunning = True
         self.btnPlay.setDisabled(False)
-        self.btnMarkRecord.setDisabled(False)
+
         self.btnOpen.setDisabled(True)
         self.btnPlay.setIcon(self.iconPause)
 
@@ -573,6 +598,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if self.isOnlineMode:  # 实时数据采集
             if self.isRunning:  # 如果正在运行，则暂停，并保存文件
                 self.btnPlay.setIcon(self.iconPlay)
+                self.btnMarkRecord.setDisabled(True)
                 if self.orgRadarThread.bLoggingFile:
                     self.orgRadarThread.bLoggingFile = False
                     self.orgRadarThread.log_file.close()
@@ -585,6 +611,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 self.creat_new_log_folde()
                 self.btnPlay.setIcon(self.iconPause)
                 # when write log file,slow down the timer to show sensor data
+                self.btnMarkRecord.setDisabled(False)
                 self.timer_sensor_show.start(ConfigConstantData.timer_online_sensor_show_and_log_ms)
 
         else:  # log文件读取

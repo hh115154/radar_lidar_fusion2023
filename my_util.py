@@ -24,7 +24,7 @@ def get_timestamp_from_str(str):
 class DeltaTemplate(Template):
     delimiter ="%"
 
-def strfdelta(tdelta, fmt='%H:%M:%S'):
+def strfdelta(tdelta, fmt='%H:%M:%S'): # format the timedelta obj
     d = {}
     d["H"], rem = divmod(tdelta.seconds, 3600)
     d["M"], d["S"] = divmod(rem, 60)

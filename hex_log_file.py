@@ -4,7 +4,7 @@ __author__ = 'Yang Hongxu'
 # @Time     : 2022/7/14 16:15
 # @File     : hex_log_file.py
 # @Project  : radar_fusion
-
+import ConfigConstantData
 import my_util
 import bisect as bs
 timeStampStr_len = 12
@@ -21,9 +21,15 @@ class Parse_Majority_Log_File():
             return
 
         self.curr_line_nr = 0
+        self.marked_timestamp_list = []
 
         self.timestamp_map_framedata = {}
         for line in self.fileLines:
+            if line.startswith(ConfigConstantData.mark_line_head):
+                line = line[len(ConfigConstantData.mark_line_head):]
+                marked_ts = line[0:timeStampStr_len]
+                self.marked_timestamp_list.append(marked_ts)
+
             ts = line[0:timeStampStr_len]
             self.timestamp_map_framedata[my_util.get_timestamp_from_str(ts)] = bytes.fromhex(line[timeStampStr_len:])
 
@@ -46,6 +52,10 @@ class Parse_Majority_Log_File():
     def get_frame_by_timestamp(self, time_stamp):
         ts = self.bin_search_nearest_frame(time_stamp)
         return self.timestamp_map_framedata[ts]
+
+    def jump_to_timestamp(self, time_stamp):
+        ts = self.bin_search_nearest_frame(time_stamp)
+        self.curr_line_nr = self.timestamp_list.index(ts)
 
     def get_curr_frame(self):
         ts = self.timestamp_list[self.curr_line_nr]

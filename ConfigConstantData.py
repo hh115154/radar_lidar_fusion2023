@@ -31,7 +31,7 @@ logFile_head_affix = 'Record_'
 logfile_tail_affix_4D548 = '.someip.ars540.hex'
 logfile_tail_affix_J3Camera = '.zmq.j3camera.hex'
 logfile_tail_affix_J3Fusion = '.zmq.j3radar_fusion.hex'
-mark_line_head = '#hh# @'
+mark_line_head = 'hhv5'
 
 
 #pic info

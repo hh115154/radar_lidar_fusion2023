@@ -36,7 +36,6 @@ class BaseThread(QThread):
         self.log_this_frame = False
         self.recv_message = None
         self.log_file = ''
-        self.mark_line_id = 0
         self.todo_mark = False
         self.bOnLineRecvMode = _bOnLineRecvMode
 
@@ -48,14 +47,12 @@ class BaseThread(QThread):
 
             self.log_file.next_frame()
 
-    def mark_a_line_of_frameInfo(self):
-        strData = ConfigConstantData.mark_line_head + str(self.mark_line_id) + '\n'
-        self.log_file.write(strData)
-        self.mark_line_id += 1
-        self.todo_mark = False
 
     def log_a_frame_to_file_as_a_line(self, frame):
         strData = my_util.get_timestamp_str() + ' ' + frame.hex(' ') + '\n'
+        if self.todo_mark:
+            strData = ConfigConstantData.mark_line_head + strData
+            self.todo_mark = False
         self.log_file.write(strData)
         self.log_this_frame = False
 
