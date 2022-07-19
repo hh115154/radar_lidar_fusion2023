@@ -149,19 +149,17 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.orgRadarThread.start()
 
     def resume_Threads_OffLine(self):
-        if self.metaThread.isRunning():
-            self.metaThread.resume()
-            self.update_log_progress()
-        if self.orgRadarThread.isRunning():
-            self.orgRadarThread.resume1(self.metaThread.log_file.get_curr_timestamp())
+        if self.isRunning:
+            if self.metaThread.isRunning():
+                self.metaThread.resume()
+                self.update_log_progress()
+            if self.orgRadarThread.isRunning():
+                self.orgRadarThread.resume1(self.metaThread.log_file.get_curr_timestamp())
 
-        i = bs.bisect_left(self.timestamp_map_pic_key_list, self.metaThread.log_file.get_curr_timestamp())
-        pic_key= self.timestamp_map_pic_key_list[i]
+            i = bs.bisect_left(self.timestamp_map_pic_key_list, self.metaThread.log_file.get_curr_timestamp())
+            pic_key= self.timestamp_map_pic_key_list[i]
 
-        self.currOffLinePic = QtGui.QPixmap(self.timestamp_map_pic[pic_key]).scaled(640, 480)
-
-
-
+            self.currOffLinePic = QtGui.QPixmap(self.timestamp_map_pic[pic_key]).scaled(640, 480)
 
     def pic_show(self):
         pass
@@ -169,7 +167,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         #     pic_info = self.meta_pic_queue.get()
         #     img = cv2.imdecode(np.frombuffer(pic_info, np.uint8), cv2.IMREAD_COLOR)
         #     data = cv2.resize(img, dsize=(ConfigConstantData.pic_width, ConfigConstantData.pic_height), fx=1, fy=1, interpolation=cv2.INTER_LINEAR)
-
 
     def buf_pic_info(self, pic_info):
         self.meta_pic_queue.put(pic_info)
@@ -215,10 +212,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 if self.isRunning:
                     self.savePictures(f)
         else:
-            try:
+            if self.isRunning:
                 self.ref_pic_lable.setPixmap(self.currOffLinePic)
-            except Exception as e:
-                print(e)
+
 
 
 
@@ -414,7 +410,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         if self.isOnlineMode:
             frame = self.showCamera()
 
-
     def getCurrTimeStr(self):
         timestamp = time.time()
         strTime = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime(timestamp))
@@ -539,7 +534,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             elif hexFile.endswith(ConfigConstantData.logfile_tail_affix_J3Fusion):
                 self.orgRadarThread.log_file = hex_log_file.Parse_Extra_Log_File(hexFile)
 
-
+        if self.metaThread.log_file.log_file_size == 0:
+            print('no meta data log info!')
+            return
 
         self.isRunning = True
         self.btnPlay.setDisabled(False)
@@ -592,13 +589,15 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         else:  # log文件读取
             if self.isRunning:
-                self.readRadarLogFileThread.pause()
+                self.metaThread.pause()
+                self.orgRadarThread.pause()
                 self.left_button.setDisabled(False)
                 self.right_button.setDisabled(False)
                 self.btnOpen.setDisabled(False)
                 self.btnPlay.setIcon(self.iconPlay)
             else:
-                self.readRadarLogFileThread.resume()
+                self.metaThread.resume()
+                self.orgRadarThread.resume()
                 self.right_button.setDisabled(True)
                 self.left_button.setDisabled(True)
                 self.btnOpen.setDisabled(True)
