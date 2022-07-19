@@ -151,6 +151,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def resume_Threads_OffLine(self):
         if self.metaThread.isRunning():
             self.metaThread.resume()
+            self.update_log_progress()
         if self.orgRadarThread.isRunning():
             self.orgRadarThread.resume1(self.metaThread.log_file.get_curr_timestamp())
 
@@ -214,7 +215,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
                 if self.isRunning:
                     self.savePictures(f)
         else:
-            self.ref_pic_lable.setPixmap(self.currOffLinePic)
+            try:
+                self.ref_pic_lable.setPixmap(self.currOffLinePic)
+            except Exception as e:
+                print(e)
+
 
 
         # if r:
@@ -295,9 +300,15 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.meta_lane_list = lane_list
 
     def update_log_progress(self):
-        self.timeSlider.setValue(self.readRadarLogFileThread.logFile.currLineNr)
-        currTime_s =self.total_time_s * self.timeSlider.value()/self.timeSlider.maximum()
-        currTime_str =time.strftime("%H:%M:%S", time.gmtime(currTime_s))
+        self.timeSlider.setValue(self.metaThread.log_file.get_progress())
+
+        ts_curr = self.metaThread.log_file.get_curr_timestamp()
+
+        timeStamp_start = self.metaThread.log_file.timestamp_list[0]
+
+        delta_t = ts_curr - timeStamp_start
+
+        currTime_str = my_util.strfdelta(delta_t, "%H:%M:%S")
 
         self.LabRatio.setText(currTime_str)
 
@@ -319,11 +330,11 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     def on_timeslider_valueChanged(self):
         if abs(self.timeSlider.value() - self.timeSlider_oldValue) > 10:
-            newLogFileLineNr =int(self.readRadarLogFileThread.logFile.log_file_size * self.timeSlider.value()/self.timeSlider.maximum())
-            self.readRadarLogFileThread.logFile.set_Progress(newLogFileLineNr)
+            newLogFileLineNr =int(self.metaThread.log_file.log_file_size * self.timeSlider.value()/self.timeSlider.maximum())
+            self.metaThread.log_file.set_progress(newLogFileLineNr)
 
             if not self.isRunning:
-                self.readRadarLogFileThread.resume()
+                self.metaThread.resume()
 
         self.timeSlider_oldValue = self.timeSlider.value()
 
@@ -454,13 +465,12 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     # 快进
     def up_time(self):
-        self.readRadarLogFileThread.logFile.next_line()
-        self.readRadarLogFileThread.resume()
+        self.metaThread.log_file.next_frame()
+        self.metaThread.resume()
 
     def down_time(self):
-        self.readRadarLogFileThread.logFile.goback_oneStep()
-        self.readRadarLogFileThread.logFile.set_Progress(self.readRadarLogFileThread.logFile.currLineNr)
-        self.readRadarLogFileThread.resume()
+        self.metaThread.log_file.goback_oneStep()
+        self.metaThread.resume()
 
     def getPicMap_with_suffix(self,path, suffix):
         # input_template_All = []
@@ -503,6 +513,10 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.metaThread.meta_obj_list_ignal.connect(self.show_meta_objects)
         # self.metaThread.meta_picinfo_signal.connect(self.buf_pic_info)
         self.metaThread.start()
+
+        # self.currOffLinePic = np.zeros(self.pic_shape, dtype=np.uint8)
+        # self.currOffLinePic =QtGui.QPixmap(self.currOffLinePic.scaled(640, 480))
+
 
     @pyqtSlot()  ##打开文件
     def on_btnOpen_clicked(self):

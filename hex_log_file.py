@@ -51,10 +51,22 @@ class Parse_Majority_Log_File():
         ts = self.timestamp_list[self.curr_line_nr]
         return self.timestamp_map_framedata[ts]
 
+    def get_progress(self):
+        return self.curr_line_nr
+
+    def set_progress(self, _line_nr):
+        self.curr_line_nr = _line_nr
+
     def next_frame(self):
         self.curr_line_nr += 1
         self.curr_line_nr %= self.log_file_size
         # ++1 until match the valid line of data
+
+    def goback_oneStep(self):
+        if self.curr_line_nr >= 4:
+            self.curr_line_nr -= 4
+        else:
+            self.curr_line_nr = 0
 
     def get_curr_timestamp(self):
         return self.timestamp_list[self.curr_line_nr]
