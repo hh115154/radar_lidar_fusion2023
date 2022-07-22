@@ -1,44 +1,36 @@
-import os
-os.environ['QT_MULTIMEDIA_PREFERRED_PLUGINS'] = 'windowsmediafoundation'
-import sys
+from __future__ import print_function
+import numpy as np
+import cv2
 
-from PyQt5 import QtCore, QtMultimedia, QtMultimediaWidgets, QtWidgets
+# detect all connected webcams
+valid_cams = []
+for i in range(8):
+    try:
+        cap = cv2.VideoCapture(i)
+    except Exception as e:
+        print(e)
+        continue
+    if cap is None or not cap.isOpened():
+        print('Warning: unable to open video source: ', i)
+    else:
+        valid_cams.append(i)
 
+caps = []
+for webcam in valid_cams:
+    caps.append(cv2.VideoCapture(webcam))
 
-class MainWindow(QtWidgets.QMainWindow):
-    """A window that displays a graphics scene in a central graphics view."""
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.graphicsScene = QtWidgets.QGraphicsScene()
-        self.graphicsScene.setSceneRect(0, 0, 800, 600)
-        self.graphicsView = QtWidgets.QGraphicsView()
-        self.graphicsView.setScene(self.graphicsScene)
-        self.setCentralWidget(self.graphicsView)
+while True:
+    # Capture frame-by-frame
+    for webcam in valid_cams:
+        ret, frame = caps[webcam].read()
+        # Display the resulting frame
+        cv2.imshow('webcam'+str(webcam), frame)
+    k = cv2.waitKey(1)
+    if k == ord('q') or k == 27:
+        break
 
+# When everything done, release the capture
+for cap in caps:
+    cap.release()
 
-class GraphicsVideoItem(QtMultimediaWidgets.QGraphicsVideoItem):
-    """An item that displays a video file when added to a graphics scene."""
-    def __init__(self, filepath):
-        super().__init__()
-        self.player = QtMultimedia.QMediaPlayer()
-        self.player.setVideoOutput(self)
-        self.player.setMedia(
-            QtMultimedia.QMediaContent(QtCore.QUrl.fromLocalFile(filepath)))
-        self.player.play()
-
-
-def main():
-    app = QtWidgets.QApplication(sys.argv)
-    mainWindow = MainWindow()
-    mainWindow.show()
-
-
-    filepath = os.path.abspath("log.mp4")
-    videoItem = GraphicsVideoItem(filepath)
-    mainWindow.graphicsScene.addItem(videoItem)
-
-    sys.exit(app.exec_())
-
-
-if __name__ == "__main__":
-    main()
+cv2.destroyAllWindows()

@@ -31,6 +31,7 @@ from PyQt5.QtMultimedia import QMediaContent,QMediaPlayer
 
 import ConfigConstantData
 
+
 map_hight_color = {1:(0.,0,1,1),
                    2:(0,1,1,1),
                    3:(0,1,0,1),
@@ -62,7 +63,15 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         self.total_time_s = 0
         self.readRadarLogFileThread = None
 
-        self.camera = cv2.VideoCapture(ConfigConstantData.camera_id , cv2.CAP_DSHOW)  # QCamera对象
+
+
+        self.camera = cv2.VideoCapture(ConfigConstantData.camera_id,cv2.CAP_DSHOW)  # QCamera对象4/
+        testFrame = self.camera.retrieve()
+        self.camera_valid =  testFrame[0]
+        if self.camera_valid == False:
+            print('no usb camera plug in !')
+
+
         self.orgRadarThread = threadMngt.OriginalRadarThread()
 
 
@@ -96,7 +105,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.pic_org = np.zeros(self.pic_shape, dtype=np.uint8)
             self.pic_meta = np.zeros(self.pic_shape, dtype=np.uint8)
             self.pic_fusion = np.zeros(self.pic_shape, dtype=np.uint8)
-            self.currOffLinePic = np.zeros(self.pic_shape, dtype=np.uint8)
+            self.currOffLinePic = None
 
             self.btnMarkRecord.clicked.connect(self.set_mark_flag)
 
@@ -155,6 +164,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
     def jump_to_marked_point(self):
         curr_idx = self.combox_marked_points.currentIndex()
+        if curr_idx == 0:
+            return
         str_timestamp = self.combox_marked_points.itemText(curr_idx)
         timestamp = my_util.get_timestamp_from_str(str_timestamp)
         self.metaThread.log_file.jump_to_timestamp(timestamp)
@@ -212,28 +223,24 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.weight_pic_fusion = 0
 
     def set_org_pic(self):
-        self.pic_org = self.clear_pic()
+        # self.pic_org = self.clear_pic()
         # if self.checkBox_pic.isChecked():
         if self.isOnlineMode:
-            r, f = self.camera.read()
-            if r:
-                show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
-                show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
-                self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(640, 480, QtCore.Qt.KeepAspectRatio))
-                if self.isRunning:
-                    self.savePictures(f)
+            if self.camera_valid:
+                r, f = self.camera.read()
+                if r:
+                    show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+                    show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
+                    self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(640, 480, QtCore.Qt.KeepAspectRatio))
+                    if self.isRunning:
+                        self.savePictures(f)
         else:
             if self.isRunning:
-                self.ref_pic_lable.setPixmap(self.currOffLinePic)
+                try:
+                    self.ref_pic_lable.setPixmap(self.currOffLinePic)
+                except Exception as e:
+                    print(e)
 
-
-
-
-        # if r:
-        #     # self.pic_org = f
-        #     self.pic_org = cv2.resize(f, (ConfigConstantData.pic_width, ConfigConstantData.pic_height))
-        #     if self.isRunning:
-        #         self.savePictures(f)
 
     def set_meta_pic(self):
         self.pic_meta = self.clear_pic()
@@ -288,8 +295,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         self.clear_lable()
 
-        pic = cv2.addWeighted(self.pic_org, self.weight_pic_org, self.pic_meta, self.weight_pic_meta, 0)
-        pic = cv2.addWeighted(pic, 1, self.pic_fusion, self.weight_pic_fusion,  0)
+        # pic = cv2.addWeighted(self.pic_org, self.weight_pic_org, self.pic_meta, self.weight_pic_meta, 0)
+        # pic = cv2.addWeighted(pic, 1, self.pic_fusion, self.weight_pic_fusion,  0)
+        pic  = cv2.addWeighted(self.pic_meta, self.weight_pic_meta, self.pic_fusion, self.weight_pic_fusion, 0)
 
         pic = cv2.cvtColor(pic, cv2.COLOR_BGR2RGB)
         pic = QtGui.QImage(pic.data, pic.shape[1], pic.shape[0],QImage.Format_RGB888)
@@ -435,14 +443,15 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         cv2.imwrite(picName, res)
 
     def showCamera(self):
-        r, f = self.camera.read()
-        if r:
-            show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
-            show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
-            self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(640, 480, QtCore.Qt.KeepAspectRatio))
-            if self.isRunning:
-                self.savePictures(f)
-        return f
+        if self.self.camera_valid:
+            r, f = self.camera.read()
+            if r:
+                show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
+                show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
+                self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(640, 480, QtCore.Qt.KeepAspectRatio))
+                if self.isRunning:
+                    self.savePictures(f)
+            return f
 
     def set_runtime_mode(self):
 
@@ -470,6 +479,9 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.set_simulink_logfile_mode()
         else:  # 实时数据采集
             self.set_runtime_mode()
+
+
+        self.reset_threads(self.isOnlineMode)
 
     # 快进
     def up_time(self):
@@ -522,8 +534,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         # self.metaThread.meta_picinfo_signal.connect(self.buf_pic_info)
         self.metaThread.start()
 
-        # self.currOffLinePic = np.zeros(self.pic_shape, dtype=np.uint8)
-        # self.currOffLinePic =QtGui.QPixmap(self.currOffLinePic.scaled(640, 480))
+        # self.currOffLinePic = np.zeros((480,640,3), dtype=np.uint8)
+        # self.currOffLinePic =QtGui.QPixmap(self.currOffLinePic)
 
     def init_mark_points_comb(self):
         if len(self.metaThread.log_file.marked_timestamp_list)>0:
