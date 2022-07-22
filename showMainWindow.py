@@ -170,6 +170,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         timestamp = my_util.get_timestamp_from_str(str_timestamp)
         self.metaThread.log_file.jump_to_timestamp(timestamp)
 
+    def resume_pic_show(self):
+        i = bs.bisect_left(self.timestamp_map_pic_key_list, self.metaThread.log_file.get_curr_timestamp())
+        pic_key = self.timestamp_map_pic_key_list[i]
+
+        self.currOffLinePic = QtGui.QPixmap(self.timestamp_map_pic[pic_key]).scaled(640, 480)
+        self.ref_pic_lable.setPixmap(self.currOffLinePic)
+
     def resume_Threads_OffLine(self):
         if self.isRunning:
             if self.metaThread.isRunning():
@@ -178,10 +185,7 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             if self.orgRadarThread.isRunning():
                 self.orgRadarThread.resume1(self.metaThread.log_file.get_curr_timestamp())
 
-            i = bs.bisect_left(self.timestamp_map_pic_key_list, self.metaThread.log_file.get_curr_timestamp())
-            pic_key= self.timestamp_map_pic_key_list[i]
-
-            self.currOffLinePic = QtGui.QPixmap(self.timestamp_map_pic[pic_key]).scaled(640, 480)
+            self.resume_pic_show()
 
     def pic_show(self):
         pass
@@ -487,10 +491,14 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
     def up_time(self):
         self.metaThread.log_file.next_frame()
         self.metaThread.resume()
+        self.orgRadarThread.resume1(self.metaThread.log_file.get_curr_timestamp())
+        self.resume_pic_show()
 
     def down_time(self):
         self.metaThread.log_file.goback_oneStep()
         self.metaThread.resume()
+        self.orgRadarThread.resume1(self.metaThread.log_file.get_curr_timestamp())
+        self.resume_pic_show()
 
     def getPicMap_with_suffix(self,path, suffix):
         # input_template_All = []
@@ -534,8 +542,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         # self.metaThread.meta_picinfo_signal.connect(self.buf_pic_info)
         self.metaThread.start()
 
-        # self.currOffLinePic = np.zeros((480,640,3), dtype=np.uint8)
-        # self.currOffLinePic =QtGui.QPixmap(self.currOffLinePic)
 
     def init_mark_points_comb(self):
         if len(self.metaThread.log_file.marked_timestamp_list)>0:
