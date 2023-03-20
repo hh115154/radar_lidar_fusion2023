@@ -17,7 +17,7 @@ from pyqtgraph.Qt import QtCore, QtGui
 import myControls
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
-from PyQt5.QtMultimediaWidgets import QCameraViewfinder
+# from PyQt5.QtMultimediaWidgets import QCameraViewfinder
 
 import ConfigConstantData
 
@@ -93,7 +93,8 @@ class Ui_MainWindow(object):
             #用于显示多层图片的lable
             self.lable_main = QtWidgets.QLabel()
             self.lable_main.setScaledContents(True)
-            self.lable_main.setFixedSize(QtCore.QSize(1200,900))
+            # self.lable_main.setFixedSize(QtCore.QSize(1200,900))
+            self.lable_main.setFixedSize(QtCore.QSize(1240,720))
 
             play_area_verticalLayout.addWidget(self.splitter_main)
 
@@ -104,7 +105,7 @@ class Ui_MainWindow(object):
 
             # 创建复选框1，并默认选中，当状态改变时信号触发事件
             self.checkBox_pic = QCheckBox("图像")
-            self.checkBox_pic.setChecked(False)
+            self.checkBox_pic.setChecked(True)
 
             # 创建复选框，标记状态改变时信号触发事件
             self.checkBox_OrgObj = QCheckBox("目标")
@@ -247,4 +248,4 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("BHAP", "BHAP"))
 
 
-from PyQt5.QtMultimediaWidgets import QVideoWidget
+# from PyQt5.QtMultimediaWidgets import QVideoWidget
