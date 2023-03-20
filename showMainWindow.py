@@ -23,11 +23,11 @@ import pyqtgraph
 import numpy as np
 import cv2
 import threadMngt
-from PyQt5.QtMultimedia import (QCameraInfo,QCameraImageCapture,
-      QImageEncoderSettings,QMultimedia,QVideoFrame,QSound,QCamera)
+# from PyQt5.QtMultimedia import (QCameraInfo,QCameraImageCapture,
+#       QImageEncoderSettings,QMultimedia,QVideoFrame,QSound,QCamera)
 
 from PyQt5.QtCore import  pyqtSlot,QUrl,QDir, QFileInfo,Qt,QEvent
-from PyQt5.QtMultimedia import QMediaContent,QMediaPlayer
+# from PyQt5.QtMultimedia import QMediaContent,QMediaPlayer
 
 import ConfigConstantData
 
@@ -89,6 +89,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             # self.metaThread.meta_picinfo_signal.connect(self.buf_pic_info)
             self.metaThread.start()
             self.metaThread.resume()
+
+            # new added
+            self.h265Thread = threadMngt.H265_PicRecvThd()
+            self.h265Thread.cv2_pic_recv_signal.connect(self.buf_pic_info)
+            self.h265Thread.start()
+            self.h265Thread.resume()
+            self.curr_pic = None
 
             self.timer_sensor_show = QtCore.QTimer()  # 控制雷达的刷新频率
             self.timer_sensor_show.timeout.connect(self.multi_pic_show)
@@ -194,8 +201,8 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
         #     img = cv2.imdecode(np.frombuffer(pic_info, np.uint8), cv2.IMREAD_COLOR)
         #     data = cv2.resize(img, dsize=(ConfigConstantData.pic_width, ConfigConstantData.pic_height), fx=1, fy=1, interpolation=cv2.INTER_LINEAR)
 
-    def buf_pic_info(self, pic_info):
-        self.meta_pic_queue.put(pic_info)
+    def buf_pic_info(self):
+        self.curr_pic = self.h265Thread.recv_message
 
     def radar408_2dBox_show(self, radar_2dBox_list):
         self.radar_2dBox_list = []
@@ -227,23 +234,18 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             self.weight_pic_fusion = 0
 
     def set_org_pic(self):
-        # self.pic_org = self.clear_pic()
-        # if self.checkBox_pic.isChecked():
-        if self.isOnlineMode:
-            if self.camera_valid:
-                r, f = self.camera.read()
-                if r:
-                    show_image = cv2.cvtColor(f, cv2.COLOR_BGR2RGB)
-                    show_image = QtGui.QImage(show_image.data, show_image.shape[1], show_image.shape[0], QImage.Format_RGB888)
-                    self.ref_pic_lable.setPixmap(QtGui.QPixmap.fromImage(show_image).scaled(640, 480, QtCore.Qt.KeepAspectRatio))
-                    if self.isRunning:
-                        self.savePictures(f)
-        else:
-            if self.isRunning:
-                try:
-                    self.ref_pic_lable.setPixmap(self.currOffLinePic)
-                except Exception as e:
-                    print(e)
+        if self.checkBox_pic.isChecked():
+            if self.isOnlineMode:
+                if self.curr_pic is not None:
+                    nparr = np.asarray(bytearray(self.curr_pic), dtype="uint8")
+                    self.pic_org = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+            else:
+                if self.isRunning:
+                    try:
+                        self.ref_pic_lable.setPixmap(self.currOffLinePic)
+                    except Exception as e:
+                        print(e)
 
 
     def set_meta_pic(self):
@@ -258,17 +260,6 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             for lane in self.meta_lane_list:
                 lane.draw_to_pic(self.pic_meta)
 
-            # test code
-            # box = presentationLayer.Box_2D(100.123,20.456,30.789,40.111)
-            # box.set_color(presentationLayer.My_cv2_Color.Red)
-            # box.set_text("hello")
-            # box.draw_to_pic(self.pic_meta)
-            #
-            # pis=[(80,400),(180,400),(200,300),(100,300),(80,600),(180,600),(200,500),(100,500)]
-            # box_3D = presentationLayer.Box_3D(pis)
-            # box_3D.set_color(presentationLayer.My_cv2_Color.Red)
-            # box_3D.set_text("hello 3D  box")
-            # box_3D.draw_to_pic(self.pic_meta)
 
     def set_fusion_pic(self):
 
@@ -281,16 +272,20 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
             for box_2d_ in self.radar_2dBox_list:
                 box_2d_.draw_to_pic(self.pic_fusion)
 
-            # box = presentationLayer.Box_2D(100,2000,30,40)
-            # box.set_color(presentationLayer.My_cv2_Color.Green)
-            # box.set_text("fusion")
-            # box.draw_to_pic(self.pic_fusion)
-
-    def clear_lable(self):
-        pic = np.zeros(self.pic_shape, dtype=np.uint8)
-        pic = cv2.cvtColor(pic, cv2.COLOR_BGR2RGB)
-        pic = QtGui.QImage(pic.data, pic.shape[1], pic.shape[0], QImage.Format_RGB888)
-        self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
+    def clear_lable(self):#清除图片上的目标物信息
+        pass
+        # if self.curr_pic is not None:
+        #     pic = np.asarray(bytearray(self.curr_pic), dtype="uint8")
+        #     print("curr pic is not none len is ", len(self.curr_pic))
+        # else:
+        #     print("pic is none")
+        #     pic = np.zeros(self.pic_shape, dtype=np.uint8)
+        # # pic = cv2.cvtColor(pic, cv2.COLOR_BGR2RGB)
+        # img_decode = cv2.imdecode(pic, cv2.IMREAD_COLOR)
+        #
+        # pic = QtGui.QImage(img_decode.data, img_decode.shape[1], img_decode.shape[0], QImage.Format_RGB888)
+        # self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic).scaled(1240, 720, QtCore.Qt.KeepAspectRatio))
+        # self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
 
     def multi_pic_show(self):
         self.set_org_pic()
@@ -299,13 +294,13 @@ class MyController(QMainWindow, testMainWindow_Ui.Ui_MainWindow):
 
         self.clear_lable()
 
-        # pic = cv2.addWeighted(self.pic_org, self.weight_pic_org, self.pic_meta, self.weight_pic_meta, 0)
-        # pic = cv2.addWeighted(pic, 1, self.pic_fusion, self.weight_pic_fusion,  0)
+        #叠加图片
         pic  = cv2.addWeighted(self.pic_meta, self.weight_pic_meta, self.pic_fusion, self.weight_pic_fusion, 0)
+        pic1  = cv2.addWeighted(pic, 1, self.pic_org, self.weight_pic_org, 0)
 
-        pic = cv2.cvtColor(pic, cv2.COLOR_BGR2RGB)
-        pic = QtGui.QImage(pic.data, pic.shape[1], pic.shape[0],QImage.Format_RGB888)
-        self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic))
+        pic2 = cv2.cvtColor(pic1, cv2.COLOR_BGR2RGB)
+        pic3 = QtGui.QImage(pic2.data, pic2.shape[1], pic2.shape[0],QImage.Format_RGB888)
+        self.lable_main.setPixmap(QtGui.QPixmap.fromImage(pic3))
 
     def show_meta_objects(self,box_2d_list,box_3d_list, lane_list):
         self.meta_2d_obj_list = []

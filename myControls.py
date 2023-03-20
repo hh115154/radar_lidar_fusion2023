@@ -12,7 +12,7 @@ import numpy as np
 
 import presentationLayer
 import protocol
-from PyQt5.QtChart import QChartView, QValueAxis, QPolarChart, QChart
+# from PyQt5.QtChart import QChartView, QValueAxis, QPolarChart, QChart
 
 
 class MyGLAxisItem(gl.GLAxisItem):

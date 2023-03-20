@@ -4,7 +4,7 @@
 
 import cv2
 
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)#打开摄像头
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)#打开摄像头
 
 #采样精度不可调？
 inpSize = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),

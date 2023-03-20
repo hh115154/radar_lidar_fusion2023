@@ -14,7 +14,7 @@ import re
 import presentationLayer
 from mySocket import MyUdpSocket, zmq_sub_client_socket
 import protocol
-import procAsamMdf
+# import procAsamMdf
 # import CppApi
 import logFileMngt
 import ConfigConstantData
@@ -154,7 +154,7 @@ class OriginalRadarThread(BaseThread):  # 原始雷达图线程,在线采集
             self.socket = zmq_sub_client_socket(ConfigConstantData.J3C_socket_if)
 
         self.frmNr = 0
-        self.mdf = procAsamMdf.MdfFile()
+        # self.mdf = procAsamMdf.MdfFile()
         self.timestamp = time.time()
         self.presentationPCL = presentationLayer.Pcl_Color()
         self.counter = 0
@@ -366,4 +366,34 @@ class ReadRadarLogFileThread(BaseThread):
             self.log_showPic_signal.emit(picName)
 
             self.pause()
+            self.mutex.unlock()
+
+
+class H265_PicRecvThd(BaseThread):
+    cv2_pic_recv_signal = pyqtSignal()
+    def __init__(self, _bOnLineRecvMode=True):
+        super(H265_PicRecvThd, self).__init__(_bOnLineRecvMode)
+        self.socket = zmq_sub_client_socket("tcp://localhost:5555")
+
+    def run(self) -> None:
+        while True:
+            self.mutex.lock()
+            if self._isPause:
+                self.cond.wait(self.mutex)
+            print("h265 decoded pic recv thread is running")
+            try:
+                self.get_next_frame_info()
+                self.cv2_pic_recv_signal.emit()
+                self.log_this_frame = True
+                if self.bOnLineRecvMode == False:
+                    self.pause()
+
+                # if self.bLoggingFile and self.log_this_frame:
+                #     self.log_a_frame_to_file_as_a_line(self.recv_message)
+                #     if self.todo_mark:
+                #         self.mark_a_line_of_frameInfo()
+
+            except Exception as e:
+                print('J3A meta data recv error', e)
+
             self.mutex.unlock()

@@ -12,7 +12,7 @@ MachineType = J3System
 
 #ip
 J3C_socket_if = 'tcp://10.13.1.12:6060'
-J3A_socket_if = 'tcp://10.13.1.10:5560'
+J3A_socket_if = 'tcp://192.168.1.10:5560'
 
 
 #protocol
@@ -21,7 +21,7 @@ PclByteNr = 35336
 
 #time
 timer_readlogfile_ms = 50# 實際應該是50
-timer_online_sensor_show_ms = 100#
+timer_online_sensor_show_ms = 50#
 timer_online_sensor_show_and_log_ms = 200#
 timer_online_pic_show_ms = 120
 
